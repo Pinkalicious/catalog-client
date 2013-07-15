@@ -3,8 +3,8 @@ Client for the Dataset REST API.
 """
 import json
 
-from globusonline.catalog import rest_client
-from globusonline.catalog.tagfiler_client import urlquote
+from globusonline.catalog.client import rest_client
+from globusonline.catalog.client.rest_client import urlquote
 
 DEFAULT_BASE_URL = "https://localhost/service/dataset"
 

@@ -9,6 +9,10 @@ import time
 from urlparse import urlparse
 from collections import namedtuple
 import logging
+import urllib
+
+from globusonline.catalog.client.verified_https import VerifiedHTTPSConnection
+from globusonline.catalog.client.ca import get_ca
 
 RETRY_WAIT_SECONDS = 5
 
@@ -51,6 +55,11 @@ class GoauthRestClient(object):
 
     def _connect(self):
         if self._is_https:
+            # TODO: enable verification when we have a stable host cert
+            # deployed.
+            #ca_certs = get_ca(self._host)
+            #self._conn = VerifiedHTTPSConnection(self._host, self._port,
+            #                                     ca_certs=ca_certs)
             self._conn = httplib.HTTPSConnection(self._host, self._port)
         else:
             self._conn = httplib.HTTPConnection(self._host, self._port)
@@ -167,6 +176,49 @@ class RestClientError(Exception):
             if value is not _NOT_SET:
                 return value
         raise AttributeError()
+
+
+def urlquote(x):
+    """Quote a str, unicode, or value coercable to str, for safe insertion
+    in a URL.
+
+    Uses utf8 encoding for unicode. Also note that the tagfiler
+    delimiters comma, semicolon, and equals sign will be percent
+    encoded, so this is effective to use quoting individual query
+    elements but should never be used on the full query.
+
+    >>> urlquote("n;a,m e=")
+    'n%3Ba%2Cm%20e%3D'
+    >>> urlquote(100)
+    '100'
+    >>> urlquote(True)
+    'True'
+    >>> urlquote(False)
+    'False'
+
+    Unicode, small a with macron:
+    >>> urlquote(u'\u0101')
+    '%C4%81'
+
+    utf8 already encoded:
+    >>> urlquote("\xc4\x81")
+    '%C4%81'
+    """
+    return urllib.quote(safestr(x), "")
+
+def urlunquote(x):
+    return urllib.unquote(x)
+
+def safestr(x):
+    """Convert x to str, encoding in utf8 if needed.
+
+    Can be used to pre-process data passed to urlencode."""
+    assert x is not None
+    if isinstance(x, unicode):
+        return x.encode("utf8")
+    elif not isinstance(x, str):
+        return str(x)
+    return x
 
 
 _NOT_SET = object()
