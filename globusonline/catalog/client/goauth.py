@@ -26,11 +26,12 @@ import getpass
 from collections import namedtuple
 import json
 import base64
+import httplib
 
 from globusonline.catalog.client.verified_https import VerifiedHTTPSConnection
 from globusonline.catalog.client.ca import get_ca
 
-HOST = "nexus.api.globusonline.org"
+HOST = "graph.api.test.globuscs.info"
 GOAUTH_PATH = "/goauth/token?grant_type=client_credentials"
 PORT = 443
 
@@ -64,8 +65,6 @@ def get_access_token(username=None, password=None, ca_certs=None):
              token field, but username/password may be useful for caching
              authentication information when using the prompt.
     """
-    if ca_certs is None:
-        ca_certs = get_ca(HOST)
     if username is None:
         print "Globus Online Username: ",
         sys.stdout.flush()
@@ -78,7 +77,10 @@ def get_access_token(username=None, password=None, ca_certs=None):
                 "Hostname": HOST,
                 "Accept": "application/json; charset=UTF-8",
                 "Authorization": "Basic %s" % basic_auth }
-    c = VerifiedHTTPSConnection(HOST, PORT, ca_certs=ca_certs)
+    if ca_certs is not None:
+        c = VerifiedHTTPSConnection(HOST, PORT, ca_certs=ca_certs)
+    else:
+        c = httplib.HTTPSConnection(HOST, PORT)
     c.request("GET", GOAUTH_PATH, headers=headers)
     response = c.getresponse()
     if response.status == 403:
