@@ -2,9 +2,12 @@
 Client for the Dataset REST API.
 """
 import json
+import urllib
+import re
 
 from globusonline.catalog.client import rest_client
 from globusonline.catalog.client.rest_client import urlquote
+from globusonline.catalog.client.operators import Op, build_selector
 
 DEFAULT_BASE_URL = "https://localhost/service/dataset"
 
@@ -68,31 +71,93 @@ class DatasetClient(rest_client.GoauthRestClient):
                                        % (urlquote(catalog_id),
                                           urlquote(dataset_id)))
 
-    def get_datasets(self, catalog_id):
-        """Get a list of all datasets the user has permission to view.
+    def get_datasets(self, catalog_id, last_id=None, limit=100,
+                     selector_list=None):
+        """Get a paged list of datasets the user has permission to view.
+        Paging is done based on last id from the previous page, not numeric
+        offset.
 
         @return: list of dataset dictionaries
         """
-        return self._request("GET", "/catalog/id=%s/dataset"
-                                    % urlquote(catalog_id))
+        params = dict(limit=limit)
+        qs = urllib.urlencode(params)
+        if selector_list is None:
+            selector_list = []
+        if last_id is not None:
+            selector_list += [("id", Op.GT, last_id)]
+        query = build_selector(selector_list)
+        return self._request("GET", "/catalog/id=%s/dataset/%s?%s"
+                                    % (urlquote(catalog_id), query, qs))
 
-    def get_dataset_annotations(self, catalog_id, dataset_id,
-                                annotation_list=None):
-        """Get a list of annotations on the specified dataset on the specified
-        catalog.
+    def get_dataset_acl(self, catalog_id, dataset_id):
+        path = "/catalog/id=%s/dataset/id=%s/acl" % (
+                    urlquote(catalog_id), urlquote(dataset_id))
+        return self._request("GET", path)
+
+    def add_dataset_acl(self, catalog_id, dataset_id, access_rules):
+        path = "/catalog/id=%s/dataset/id=%s/acl" % (
+                    urlquote(catalog_id), urlquote(dataset_id))
+        return self._request("POST", path, json.dumps(access_rules))
+
+    def get_dataset_access_rule(self, catalog_id, dataset_id, principal_type,
+                                principal):
+        if principal_type not in ("user", "group"):
+            raise ValueError("principal_type must be 'user' or 'group'")
+        path = "/catalog/id=%s/dataset/id=%s/acl/%s/%s" % (
+                    urlquote(catalog_id), urlquote(dataset_id),
+                    principal_type, urlquote(principal))
+        return self._request("GET", path)
+
+    def delete_dataset_access_rule(self, catalog_id, dataset_id,
+                                   principal_type, principal):
+        if principal_type not in ("user", "group"):
+            raise ValueError("principal_type must be 'user' or 'group'")
+        path = "/catalog/id=%s/dataset/id=%s/acl/%s/%s" % (
+                    urlquote(catalog_id), urlquote(dataset_id),
+                    principal_type, urlquote(principal))
+        return self._request("DELETE", path)
+
+    def get_dataset_annotations(self, catalog_id, dataset_id=None,
+                                annotation_list=None, selector_list=None,
+                                **params):
+        """Get a list of annotations on the matching datasets in the specified
+        catalog. Pass either dataset_id for a single dataset, a
+        selector_list for complex searching, or neither to get all datasets
+        in the catalog.
 
         @param catalog_id: catalog containing the dataset
         @param dataset_id: dataset to return annotation for
+        @param selector_list: list of selector tuples, as an alternative to
+                              dataset_id
         @param annotation_list: optional list of annotation names to return;
                                 defaults to all annotations.
         """
-        # TODO: support full dataset pattern
-        path = "/catalog/id=%s/dataset/id=%s/annotation" %(
-                urlquote(catalog_id), urlquote(dataset_id))
+        if selector_list is not None and dataset_id is not None:
+            raise ValueError("specify one of selector_list or dataset_id")
+        if selector_list is None:
+            if dataset_id is None:
+                selector_list = ["name"]
+            else:
+                selector_list = [("id", Op.EQUAL, dataset_id)]
+        query = build_selector(selector_list)
+        path = "/catalog/id=%s/dataset/%s/annotation" %(
+                urlquote(catalog_id), query)
         if annotation_list is not None:
             path = "%s/%s" % (path,
                               ";".join(urlquote(x) for x in annotation_list))
+        if params:
+            path = "%s?%s" % (path, urllib.urlencode(params))
         return self._request("GET", path)
+
+    def get_dataset_annotation_ranges(self, catalog_id, dataset_id=None,
+                                      annotation_list=None,
+                                      selector_list=None):
+        return self.get_dataset_annotations(catalog_id,
+                                            dataset_id=dataset_id,
+                                            selector_list=selector_list,
+                                            annotation_list=annotation_list,
+                                            range="values",
+                                            versions="latest")
 
     def add_dataset_annotations(self, catalog_id, dataset_id,
                                 annotations_dict):
@@ -117,8 +182,7 @@ class DatasetClient(rest_client.GoauthRestClient):
     def create_member(self, catalog_id, dataset_id, member):
         """Helper for creating a single member using the standard bulk
         interface."""
-        results = self.create_members(catalog_id, dataset_id, [member])
-        return results[0]
+        return self.create_members(catalog_id, dataset_id, [member])
 
     def create_members(self, catalog_id, dataset_id, members):
         """Create members in the given dataset.

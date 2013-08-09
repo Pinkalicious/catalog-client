@@ -2,6 +2,7 @@
 Base client for JSON REST APIs using GoAuth.
 """
 import httplib
+import urllib
 import json
 import ssl
 import socket
@@ -9,10 +10,6 @@ import time
 from urlparse import urlparse
 from collections import namedtuple
 import logging
-import urllib
-
-from globusonline.catalog.client.verified_https import VerifiedHTTPSConnection
-from globusonline.catalog.client.ca import get_ca
 
 RETRY_WAIT_SECONDS = 5
 
@@ -55,11 +52,6 @@ class GoauthRestClient(object):
 
     def _connect(self):
         if self._is_https:
-            # TODO: enable verification when we have a stable host cert
-            # deployed.
-            #ca_certs = get_ca(self._host)
-            #self._conn = VerifiedHTTPSConnection(self._host, self._port,
-            #                                     ca_certs=ca_certs)
             self._conn = httplib.HTTPSConnection(self._host, self._port)
         else:
             self._conn = httplib.HTTPConnection(self._host, self._port)
@@ -178,6 +170,9 @@ class RestClientError(Exception):
         raise AttributeError()
 
 
+_NOT_SET = object()
+
+
 def urlquote(x):
     """Quote a str, unicode, or value coercable to str, for safe insertion
     in a URL.
@@ -219,9 +214,6 @@ def safestr(x):
     elif not isinstance(x, str):
         return str(x)
     return x
-
-
-_NOT_SET = object()
 
 
 if __name__ == "__main__":
