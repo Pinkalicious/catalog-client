@@ -14,8 +14,8 @@ if __name__ == "__main__":
     _, data = client.get_catalogs()
     for cat in data:
         print cat
-        print "==== %s ====" % cat["name"]
-        for k, v in cat.iteritems():
+        print "==== %s ====" % cat["config"]["name"]
+        for k, v in cat["config"].iteritems():
             if k == "name":
                 continue
             print "%s: %s" % (k, v)
