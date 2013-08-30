@@ -140,6 +140,20 @@ def execute_commands(the_command, the_args):
 			return False
 		else:
 			return False
+
+	elif(the_command == 'get_dataset_members'):
+		#@arg[0] = catalog ID -- INT
+		#@arg[1] = dataset ID -- INT
+		try:
+			if the_args[0] != '' and the_args[1] != '':
+				_,cur_members = wrap.catalogClient.get_members(the_args[0],the_args[1])
+				print json.dumps(cur_members)
+				return True
+		except Exception, e:
+			print e
+			return False
+		else:
+			return False
 	
 	elif(the_command=='query'):
 		print "QUERY: UNDER IMPLEMENTATION",the_args
@@ -154,7 +168,10 @@ def execute_commands(the_command, the_args):
 
 
 if __name__ == "__main__":
-	commands = ("get_catalogs","write_token","create_dataset","create_catalog","get_datasets","add_dataset_tag","create_annotation_def","delete_catalog","delete_dataset","query")
+	commands = ("get_catalogs","get_dataset_members","write_token",
+		        "create_dataset","create_catalog","get_datasets",
+		        "add_dataset_tag","create_annotation_def",
+		        "delete_catalog","delete_dataset","query")
 
 	the_command = ''
 	the_args = ''
