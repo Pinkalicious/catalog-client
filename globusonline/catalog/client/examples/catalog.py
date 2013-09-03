@@ -5,7 +5,6 @@ from CatalogWrapper import *
 
 print_text = False 	#Variable used to decide whether output should be in JSON (False) or limited plain text (True)
 
-json_dict = ''  	#need this?
 catalog_list = ''	#need this?
 
 
@@ -35,7 +34,6 @@ def check_flags(the_flag_list, the_args):
 
 def execute_commands(the_command, the_args):
 	global wrap
-	global json_dict
 
 	#Tested
 	if(the_command=='get_catalogs'):
@@ -160,7 +158,6 @@ def execute_commands(the_command, the_args):
 		else:
 			return False
 
-#Current functionality is turned off on the alpha server
 	elif(the_command=='create_annotation_def'):
 		#@arg[0] = catalog_id -- INT
 		#@arg[1] = annotation name - string
@@ -180,6 +177,38 @@ def execute_commands(the_command, the_args):
 			return False
 		else:
 			return False
+
+	elif(the_command=='get_dataset_annotations'):
+		#@arg[0] = catalog_id -- INT
+		#@arg[1] = dataset id -- INT
+		dataset_annotations = ''
+		arg0 = ''
+		arg1 = ''
+
+		try: 
+			arg0 = the_args[0]
+		except:
+			arg0 = ''
+
+		try:
+			arg1 = the_args[1]
+		except:	
+			arg1 = ''
+
+		if(arg0 != '' and arg1 != ''):
+			_,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0,arg1)
+		elif(arg0 != '' and arg1 == ''):
+			_,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0)
+		else:
+			print 'Invalid arguments passed'
+			return False
+
+		if print_text == True:
+			for annotation in dataset_annotations:
+				print annotation
+		else:	
+			print json.dumps(dataset_annotations)
+		return True
 
 	elif(the_command=='add_dataset_tag'):
 		#@arg[0] = catalog_id -- INT
@@ -253,7 +282,7 @@ if __name__ == "__main__":
 	command_list = ("get_catalogs","get_dataset_members","write_token",
 			        "create_dataset","create_catalog","get_datasets",
 			        "add_dataset_tag","create_annotation_def",
-			        "delete_catalog","delete_dataset","query")
+			        "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations","query")
 
 	flag_list = ("-text")
 
