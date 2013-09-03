@@ -27,7 +27,7 @@ def check_flags(the_flag_list, the_args):
 	for arg in the_args:
 		if arg in the_flag_list:
 			the_flags.append(arg)
-			
+
 	for flag in the_flags:
 		if flag == "-text":
 			print_text = True
@@ -206,7 +206,7 @@ def execute_commands(the_command, the_args):
 				if print_text == True:
 					print "============================================================"
 					print "*More detailed member information available in JSON format*"
-					print 'ID) Member Name - [Owner] - Catalog Description'
+					print 'ID) Reference Dataset - Member Type - URI'
 					print "============================================================"
 					for member in cur_members:
 						member_references = ''
