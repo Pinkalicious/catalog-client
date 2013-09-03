@@ -52,13 +52,19 @@ def execute_commands(the_command, the_args):
 					#print catalog
 					catalog_description = ''
 					catalog_owners = ''
-					
-					try:
-						descriptionString = catalog['config']['description']
-					except Exception, e:
-						descriptionString = ''	
+					catalog_name = ''
 
-					print "%s)\t%s - [%s] - %s"%(catalog['id'], catalog['config']['name'],catalog['config']['owner'], catalog_description)
+					try:
+						catalog_description = catalog['config']['description']
+					except Exception, e:
+						catalog_description = ''
+
+					try:
+						catalog_name = catalog['config']['name']
+					except Exception, e:
+						catalog_name = 'no catalog name'
+
+					print "%s)\t%s - [%s] - %s"%(catalog['id'], catalog_name, catalog['config']['owner'], catalog_description)
 
 			else:
 				print json.dumps(catalog_list)
@@ -136,8 +142,14 @@ def execute_commands(the_command, the_args):
 							dataset_labels = ','.join(dataset['label'])
 						except:
 							dataset_labels = 'no labels'
+
+						try:
+							dataset_name = dataset['name']
+						except Exception, e:
+							dataset_name = 'no dataset name'
+
 						#print dataset
-						print "%s) %s - [%s] - <%s>"%(dataset['id'],dataset['name'],dataset['owner'],dataset_labels)
+						print "%s) %s - [%s] - <%s>"%(dataset['id'],dataset_name,dataset['owner'],dataset_labels)
 				else:
 					print json.dumps(cur_datasets)
 
