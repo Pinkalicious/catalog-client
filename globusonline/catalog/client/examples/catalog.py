@@ -3,17 +3,35 @@ import json
 
 from CatalogWrapper import *
 
-json_dict = ''
-catalog_list = ''
+print_text = False 	#Variable used to decide whether output should be in JSON (False) or limited plain text (True)
+
+json_dict = ''  	#need this?
+catalog_list = ''	#need this?
+
+
+
 
 def split_args(the_command_list, the_args):
 	global the_command
-	
+
 	for arg in the_args:
-		if(arg in the_command_list):
+		if arg in the_command_list:
 			the_command = arg
 			split_index = the_args.index(arg) + 1
 			return the_args[split_index:]
+
+def check_flags(the_flag_list, the_args):
+	global the_flags
+	global print_text
+
+	for arg in the_args:
+		if arg in the_flag_list:
+			the_flags.append(arg)
+			
+	for flag in the_flags:
+		if flag == "-text":
+			print_text = True
+
 
 def execute_commands(the_command, the_args):
 	global wrap
@@ -23,11 +41,32 @@ def execute_commands(the_command, the_args):
 	if(the_command=='get_catalogs'):
 		#takes no args, returns all visible catalogs
 		try:
-			catalog_list = wrap.catalogClient.get_catalogs()
-			print json.dumps(catalog_list[1])
+			_,catalog_list = wrap.catalogClient.get_catalogs()
+			if print_text == True:
+				print "============================================================"
+				print "*More detailed catalog information available in JSON format*"
+				print 'ID) Catalog Name - [Owner] - Catalog Description'
+				print "============================================================"
+
+				for catalog in catalog_list:
+					#print catalog
+					catalog_description = ''
+					catalog_owners = ''
+					
+					try:
+						descriptionString = catalog['config']['description']
+					except Exception, e:
+						descriptionString = ''	
+
+					print "%s)\t%s - [%s] - %s"%(catalog['id'], catalog['config']['name'],catalog['config']['owner'], catalog_description)
+
+			else:
+				print json.dumps(catalog_list)
+
+			
 			return True
 		except Exception, e:
-			print e
+			#print e
 			return False
 		else:
 			return False
@@ -84,7 +123,24 @@ def execute_commands(the_command, the_args):
 		try:
 			if(the_args[0] != ''):
 				_,cur_datasets= wrap.catalogClient.get_datasets(the_args[0])
-				print json.dumps(cur_datasets)
+				
+				print "============================================================"
+				print "*More detailed dataset information available in JSON format*"
+				print "ID) Dataset Name  - [Owner] - <Datset Labels>"
+				print "============================================================"
+
+				if print_text == True:
+					for dataset in cur_datasets:
+						dataset_labels = ''
+						try:
+							dataset_labels = ','.join(dataset['label'])
+						except:
+							dataset_labels = 'no labels'
+						#print dataset
+						print "%s) %s - [%s] - <%s>"%(dataset['id'],dataset['name'],dataset['owner'],dataset_labels)
+				else:
+					print json.dumps(cur_datasets)
+
 				return True
 		except Exception, e:
 			print e
@@ -147,7 +203,20 @@ def execute_commands(the_command, the_args):
 		try:
 			if the_args[0] != '' and the_args[1] != '':
 				_,cur_members = wrap.catalogClient.get_members(the_args[0],the_args[1])
-				print json.dumps(cur_members)
+				if print_text == True:
+					print "============================================================"
+					print "*More detailed member information available in JSON format*"
+					print 'ID) Member Name - [Owner] - Catalog Description'
+					print "============================================================"
+					for member in cur_members:
+						member_references = ''
+						try:
+							member_references = ','.join(member['dataset_reference'])
+						except:
+							member_labels = 'no references'
+						print "%s) ref:%s - %s - %s"%(member['id'], member_references,member['data_type'], member['data_uri'])
+				else:
+					print json.dumps(cur_members)
 				return True
 		except Exception, e:
 			print e
@@ -168,12 +237,16 @@ def execute_commands(the_command, the_args):
 
 
 if __name__ == "__main__":
-	commands = ("get_catalogs","get_dataset_members","write_token",
-		        "create_dataset","create_catalog","get_datasets",
-		        "add_dataset_tag","create_annotation_def",
-		        "delete_catalog","delete_dataset","query")
 
-	the_command = ''
+	command_list = ("get_catalogs","get_dataset_members","write_token",
+			        "create_dataset","create_catalog","get_datasets",
+			        "add_dataset_tag","create_annotation_def",
+			        "delete_catalog","delete_dataset","query")
+
+	flag_list = ("-text")
+
+	the_command = ''	#Stores the command to be executed via the catalogClient API
+	the_flags = []		#Stores any flags detected in the arguments
 	the_args = ''
 
 	
@@ -191,8 +264,11 @@ if __name__ == "__main__":
 	# 	wrap = CatalogWrapper(token = )	
 	# else:
 
+	#Grab any recognized flags
+	check_flags(flag_list,sys.argv)
+
 	#Condition the input argument list (slice at the first recognized command and set the_command)
-	the_args = split_args(commands,sys.argv)
+	the_args = split_args(command_list,sys.argv)
 
 	#Execute the apprpriate client action and check for appropriate args
 	execute_commands(the_command,the_args)
