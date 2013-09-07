@@ -2,7 +2,7 @@ import sys
 import json
 import re
 
-from CatalogWrapper import *
+from catalog_wrapper import *
 
 print_text = False  #Variable used to decide whether output should be in JSON (False) or limited plain text (True)
 
@@ -249,9 +249,10 @@ def execute_commands(the_command, the_args):
         #@arg[1] = dataset id -- INT
         #@arg[2] = annotation list -- text string '{new-attribute:value}'
         try:
+            print the_args
             if(the_args[0] != '' and the_args[1] != '' and the_args[2] != ''):
-                wrap.catalogClient.add_dataset_annotations(the_args[0],the_args[1],the_args[2])
-                print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1].the_args[2])
+                print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1],the_args[2])
+                wrap.catalogClient.add_dataset_annotations(the_args[0],the_args[1],json.loads(the_args[2]))
                 return True
         except Exception, e:
             print e
@@ -303,11 +304,6 @@ def execute_commands(the_command, the_args):
         #@arg[0] - catalog_id -- INT
         #@arg[1] - regexp search
 
-        print "============================================================"
-        print "*Implementation in Progress                                 "
-        print "ID) Dataset Name  - [Owner] - <Datset Labels>"
-        print "============================================================"
-
         cur_datasets = ''
         matching_datasets = []
 
@@ -332,6 +328,13 @@ def execute_commands(the_command, the_args):
 
 
         if print_text == True:
+            print "============================================================"
+            print "*Implementation in Progress                                 "
+            print "ID) Dataset Name  - [Owner] - <Datset Labels>"
+            print "============================================================"
+
+
+
             for matching_dataset in matching_datasets:
                 dataset_labels = ''
                 dataset_name = ''
@@ -396,4 +399,7 @@ if __name__ == "__main__":
 
     #Execute the apprpriate client action and check for appropriate args
     execute_commands(the_command,the_args)
+
+#if 'name' not in dataset:
+#    dataset['name'] = 'No Name'
 
