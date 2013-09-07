@@ -249,10 +249,10 @@ def execute_commands(the_command, the_args):
         #@arg[1] = dataset id -- INT
         #@arg[2] = annotation list -- text string '{new-attribute:value}'
         try:
-            print the_args
             if(the_args[0] != '' and the_args[1] != '' and the_args[2] != ''):
-                print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1],the_args[2])
-                wrap.catalogClient.add_dataset_annotations(the_args[0],the_args[1],json.loads(the_args[2]))
+                #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1],the_args[2])
+                _,response = wrap.catalogClient.add_dataset_annotations(the_args[0],the_args[1],json.loads(the_args[2]))
+                print response
                 return True
         except Exception, e:
             print e
