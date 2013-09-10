@@ -10,7 +10,6 @@ catalog_list = ''   #need this?
 
 
 
-
 def split_args(the_command_list, the_args):
     global the_command
 
@@ -230,16 +229,21 @@ def execute_commands(the_command, the_args):
             arg1 = ''
 
         if(arg0 != '' and arg1 != ''):
-            _,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0,arg1)
-        elif(arg0 != '' and arg1 == ''):
-            _,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0)
+            _,tmp_result = wrap.catalogClient.get_dataset_annotations(arg0,arg1,annotation_list=['annotations_present'])
+            _,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0,arg1,annotation_list=tmp_result[0]['annotations_present'])
+        #elif(arg0 != '' and arg1 == ''):
+         #   _,tmp_result = wrap.catalogClient.get_dataset_annotations(arg0,annotation_list=['annotations_present'])
+            #_,dataset_annotations = wrap.catalogClient.get_dataset_annotations(arg0,tmp_result[0]['annotations_present'])
         else:
             print 'Invalid arguments passed'
             return False
 
+
         if print_text == True:
-            for annotation in dataset_annotations:
-                print annotation
+            print "Tag:Value"
+            for record in dataset_annotations:
+                for tag_key in record:
+                    print "%s:%s"%(tag_key, record[tag_key])
         else:   
             print json.dumps(dataset_annotations)
         return True
