@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-
 from globusonline.catalog.client.goauth import get_access_token
 from globusonline.catalog.client.dataset_client import DatasetClient
-
 from globusonline.transfer.api_client import TransferAPIClient, Transfer
-
 import re
 import collections
 
@@ -76,7 +73,7 @@ class CatalogWrapper:
         file = open(self.token_file,'w')
         file.write(tmpToken.token)
         self.token = tmpToken.token
-        return True
+        return True        
 
     ##Transfer/Catalog Interfacing    
     def set_destination_endpoint(self, destination_endpoint=None):
@@ -105,7 +102,7 @@ class CatalogWrapper:
             #code, reason, result = self.transferClient.transfer_submission_id()
             #submission_id = result["value"]
             #transfer_object = Transfer(submission_id, bundle[0]['endpoint'], self.destination_endpoint)
-
+            
             for transfer in bundle:
                 print '==Starting transfer of %s @%s from %s to %s %s=='%(transfer['type'],transfer['location'],
                                                                           transfer['endpoint'],self.destination_endpoint, 
@@ -118,24 +115,17 @@ class CatalogWrapper:
                     #transfer_object.add_item(trans['location'], self.destination_path, recursive=True)
                 else:
                     print '==Uncaught Type=='
-
             # status, reason, result = self.transferClient.transfer(transfer_object)
             # task_id = result["task_id"]
             # print '==TRANSFER TASK ID: %s=='%(result["task_id"])
-
-
             # status, reason, result = self.transferClient.task(task_id)
             # print '==TRANSFER RESULT: %s=='%(result["status"])
-
-            #transfer the bundle    
-
-        # for member in self.members:
-        #     print '==START TRANSFER of %s from %s to %s=='%(member['data_type'],member['data_uri'],self.destination_endpoint)
+            #transfer the bundle
         return True
 
     def extract_transfer_details(self):
-        print '==Extracting Transfer Details=='
         #get the endpoints and data locations from the data_uri and store them in transfer_details    
+        print '==Extracting Transfer Details=='
         for member in self.members:
             tmpDict = {}
             match = re.findall('globus://([\w#]+)/([\w/~._-]+)',member['data_uri'])
@@ -144,29 +134,21 @@ class CatalogWrapper:
                 tmpDict['location'] = match[0][1]
                 tmpDict['type']     = member['data_type']
                 self.transfer_details.append(tmpDict)
-        self.sort_transfers()
+        self.group_transfers()
         return True
 
-    def sort_transfers(self):
-        sorted_transfers = collections.defaultdict(list)
-        print '==Sorting Transfers=='
+    def group_transfers(self):
+        grouped_transfers = collections.defaultdict(list)
+        print '==Grouping Transfers=='
         for detail in self.transfer_details:
-            sorted_transfers[detail['endpoint']].append(detail)
-        self.transfer_queue = sorted_transfers.values()
+            grouped_transfers[detail['endpoint']].append(detail)
+        self.transfer_queue = grouped_transfers.values()
 
     def activate_endpoints(self):
-        endpoints = []
-        unique_endpoints = []
-
-        endpoints.append(self.destination_endpoint)
+        unique_endpoints = set()
+        unique_endpoints.add(self.destination_endpoint)
         for detail in self.transfer_details:
-            endpoints.append(detail['endpoint'])
-
-        unique_endpoints = list(set(endpoints))
+            unique_endpoints.add(detail['endpoint'])
         for endpoint in unique_endpoints:
             print "==Activating Endpoint",endpoint,"=="
             status, message, data = self.transferClient.endpoint_autoactivate(endpoint)
-            #print data
-
-###
-
