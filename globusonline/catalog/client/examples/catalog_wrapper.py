@@ -13,8 +13,6 @@ class CatalogWrapper:
         self.password        = password
         self.token           = token
         self.token_file      = token_file  
-        self.catalogs        = ''
-        self.datasets        = ''
         self.members         = ''
         self.transfer_details = []
         self.catalog_base_url  = "https://catalog-alpha.globuscs.info/service/dataset"
@@ -28,9 +26,20 @@ class CatalogWrapper:
         self.transfer_queue = ''
         #Client Variables
         self.catalogClient  = ''     #client for interfacing with Globus Catalog
+        #Debug Variables
+        self.debug = True
+        self.debug_list = []
         
         self.GO_authenticate()
         
+    def __del__(self):
+        if self.debug is True:
+            debug_str = '\n'.join(self.debug_list)
+            print debug_str
+            file = open('catalog_wrapper-debug.txt','w')
+            file.write(debug_str)
+        else:
+            pass
 
     #Member Functions      
     def GO_authenticate(self):
@@ -85,34 +94,34 @@ class CatalogWrapper:
         self.activate_endpoints(self.transfer_details)
 
         for bundle in self.transfer_queue:
-            print '==Unwrapping transfer bundle and creating transfer instance/ID %s => %s=='%(bundle[0]['endpoint'],self.destination_endpoint)
+            self.debug_list.append('==Unwrapping transfer bundle and creating transfer instance/ID %s => %s=='%(bundle[0]['endpoint'],self.destination_endpoint))
             #code, reason, result = self.transferClient.transfer_submission_id()
             #submission_id = result["value"]
             #transfer_object = Transfer(submission_id, bundle[0]['endpoint'], self.destination_endpoint)     
             for transfer in bundle:
-                print '==Starting transfer of %s @%s from %s to %s %s=='%(transfer['type'],transfer['location'],
+                self.debug_list.append('==Starting transfer of %s @%s from %s to %s %s=='%(transfer['type'],transfer['location'],
                                                                           transfer['endpoint'],self.destination_endpoint, 
-                                                                          self.destination_path)
+                                                                          self.destination_path))
                 if transfer['type'] == 'file':
-                    print '==Transferring File=='
+                    self.debug_list.append('==Transferring File==')
                     #transfer_object.add_item(trans['location'], self.destination_path)
                 elif transfer['type'] == 'directory':
-                    print '==Transferring Directory -- Adding Recursion=='
+                    self.debug_list.append('==Transferring Directory -- Adding Recursion==')
                     #transfer_object.add_item(trans['location'], self.destination_path, recursive=True)
                 else:
-                    print '==Uncaught Type=='
+                    self.debug_list.append('==Uncaught Type==')
             # status, reason, result = self.transferClient.transfer(transfer_object)
             # task_id = result["task_id"]
-            # print '==TRANSFER TASK ID: %s=='%(result["task_id"])
+            # self.debug_list.append('==TRANSFER TASK ID: %s=='%(result["task_id"]))
             # status, reason, result = self.transferClient.task(task_id)
-            # print '==TRANSFER RESULT: %s=='%(result["status"])
+            # self.debug_list.append('==TRANSFER RESULT: %s=='%(result["status"]))
             #transfer the bundle
         return True
 
     def extract_transfer_details(self, member_list):
         #get the endpoints and data locations from the data_uri and store them in transfer_details    
         transfer_details = []
-        print '==Extracting Transfer Details=='
+        self.debug_list.append('==Extracting Transfer Details==')
         for member in member_list:
             tmpDict = {}
             match = re.findall('globus://([\w#]+)/([\w/~._-]+)',member['data_uri'])
@@ -125,7 +134,7 @@ class CatalogWrapper:
 
     def group_transfers(self, transfer_details):
         grouped_transfers = collections.defaultdict(list)
-        print '==Grouping Transfers=='
+        self.debug_list.append('==Grouping Transfers==')
         for detail in transfer_details:
             grouped_transfers[detail['endpoint']].append(detail)
         return grouped_transfers.values()
@@ -136,7 +145,7 @@ class CatalogWrapper:
         for detail in transfer_details:
             unique_endpoints.add(detail['endpoint'])
         for endpoint in unique_endpoints:
-            print "==Activating Endpoint",endpoint,"=="
+            self.debug_list.append("==Activating Endpoint"+endpoint+"==")
             status, message, data = self.transferClient.endpoint_autoactivate(endpoint)
 
 
