@@ -245,13 +245,13 @@ def execute_commands(the_command, the_args):
         if print_text is True:
             print "Tag:Value"
             for record in dataset_annotations:
-                for tag_key in record:
-                    print "%s:%s"%(tag_key, record[tag_key])
+                for annotation_key in record:
+                    print "%s:%s"%(annotation_key, record[annotation_key])
         else:   
             print json.dumps(dataset_annotations)
         return True
 
-    elif(the_command == 'add_dataset_tag'):
+    elif(the_command == 'add_dataset_annotation'):
         #@arg[0] = catalog_id -- INT
         #@arg[1] = dataset id -- INT
         #@arg[2] = annotation list -- text string '{new-attribute:value}'
@@ -323,7 +323,7 @@ if __name__ == "__main__":
 
     command_list = ("get_catalogs","get_dataset_members","write_token",
                     "create_dataset","create_catalog","get_datasets",
-                    "add_dataset_tag","create_annotation_def",
+                    "add_dataset_annotation","create_annotation_def",
                     "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations",
                     "get_annotation_defs","test_command","get_datasets_by_name","query_datasets")
     flag_list = ("-text")
