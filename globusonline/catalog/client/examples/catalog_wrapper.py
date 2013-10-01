@@ -31,6 +31,9 @@ class CatalogWrapper:
         self.debug_list = []
         
         self.GO_authenticate()
+
+        if self.debug is True:
+            self.debug_list.append('')
         
     def __del__(self):
         if self.debug is True:
@@ -49,14 +52,13 @@ class CatalogWrapper:
         if self.username is not None and self.password is not None:
             tmpToken = get_access_token(self.username, self.password)
             self.token = tmpToken.token
-        elif self.token == 'file':
+        elif self.token_file is not None:
             try:
                 file = open(self.token_file,'r')
                 self.token = file.read()
                 self.username = self.token.split('|')[0][3:] #read the username from the token file which is split by | and listed after un= in the first string
             except Exception, e:
                 self.create_token_file()
-                return True
             else:
                 pass            
         else:
@@ -147,5 +149,7 @@ class CatalogWrapper:
         for endpoint in unique_endpoints:
             self.debug_list.append("==Activating Endpoint"+endpoint+"==")
             status, message, data = self.transferClient.endpoint_autoactivate(endpoint)
+            #check data["code"] value starts with activation failed, raise an exception
+            #test with shared endpoints created on goep1 goep2
 
 
