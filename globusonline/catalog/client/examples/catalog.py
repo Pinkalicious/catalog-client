@@ -28,7 +28,6 @@ def check_flags(the_flag_list, the_args):
             print_text = True
 
 def format_catalog_text(the_catalog):
-    #print catalog
     catalog_description = ''
     catalog_owners = ''
     catalog_name = ''
@@ -303,8 +302,15 @@ def execute_commands(the_command, the_args):
             return False
 
     elif(the_command == 'query_datasets'):
-        selector_list = [(the_args[1],Op[the_args[2]],the_args[3])]
-        _,result = wrap.catalogClient.get_datasets(the_args[0], selector_list=selector_list)
+        #add a try block here to catch Op KeyError
+        try:
+            selector_list = [(the_args[1],Op[the_args[2]],the_args[3])]
+            _,result = wrap.catalogClient.get_datasets(the_args[0], selector_list=selector_list)
+        except KeyError:
+            print 'Unknown query operator %s -- Known query Operators are'%the_args[2]
+            print Op.keys()
+            return False
+
         if print_text is True:
             for dataset in result:
                 print format_dataset_text(dataset)
@@ -334,7 +340,7 @@ if __name__ == "__main__":
 
     #Store authentication data in a local file
     token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
-    wrap = CatalogWrapper(token="file", token_file=token_file)
+    wrap = CatalogWrapper(token_file=token_file)
     
     #Input authentication data with every call
     #wrap = CatalogWrapper()
@@ -345,5 +351,5 @@ if __name__ == "__main__":
     #Condition the input argument list. Slice at the first recognized command from command_list and set the_command
     the_args = split_args(command_list,sys.argv)
 
-    #Execute the apprpriate client action and check for appropriate args
+    #Execute the appropriate client action and check for appropriate args
     execute_commands(the_command,the_args)
