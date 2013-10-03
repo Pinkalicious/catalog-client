@@ -69,7 +69,7 @@ def format_member_text(the_member):
         member_labels = 'no references'
     return "%s) ref:%s - %s - %s"%(the_member['id'], member_references, the_member['data_type'], the_member['data_uri'])
 
-def execute_commands(the_command, the_args):
+def execute_command(the_command, the_args):
     global wrap
     if(the_command == 'get_catalogs'):
         #takes no args, returns all visible catalogs
@@ -197,23 +197,42 @@ def execute_commands(the_command, the_args):
         catalog_arg = None
         annotation_arg = None
         value_arg = None
+        multivalue_arg = False
 
         try:
             if default_catalog is not None:
                 catalog_arg = default_catalog
                 annotation_arg = the_args[0]
                 value_arg = the_args[1]
+                try:
+                    multivalue_arg = the_args[2]
+                except IndexError:
+                    pass
             else:
                 catalog_arg = the_args[0]
                 annotation_arg = the_args[1]
                 value_arg = the_args[2]
+                try:
+                    multivalue_arg = the_args[3]
+                except IndexError:
+                    pass
+
+        except IndexError:
+            print "==================ERROR===================="
+            print "Invalid Arguments passed for create_annotation_def"
+            print "create_dataset accepts three arguments 1) the catalog ID"
+            print "2) Annotation Name 3) Annotation Value"
+            print "Example: python catalog.py create_annotation_def 48 'datalocation' 'text'"
+            print "==========================================="
+            return False
         except KeyError, e:
-            print e
+            print 'KeyError:',e
             return False
 
+        bool_multivalue_arg = multivalue_arg in ['true','True','t','T','1']    
         print "CREATE ANNOTATION DEF - Catalog ID:%s  Name:%s  Type:%s"%(catalog_arg,annotation_arg,value_arg)
         response = wrap.catalogClient.create_annotation_def(catalog_id=catalog_arg, annotation_name=annotation_arg, 
-                                                            value_type=value_arg)
+                                                            value_type=value_arg, multivalued=bool_multivalue_arg)
         print response
         return response
         
@@ -389,6 +408,45 @@ def execute_commands(the_command, the_args):
                 print json.dumps(cur_members)
                 return True
 
+    elif(the_command == 'add_member_annotation'):
+        #@arg[0] = catalog_id -- INT
+        #@arg[1] = dataset id -- INT
+        #@arg[2] = annotation list -- text string '{new-attribute:value}'
+        catalog_arg = None
+        dataset_arg = None
+        member_arg = None
+        annotation_arg = None
+
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                dataset_arg = the_args[0]
+                member_arg = the_args[1]
+                annotation_arg = the_args[2]
+            else:
+                catalog_arg = the_args[0]
+                dataset_arg = the_args[1]
+                member_arg = the_args[2]
+                annotation_arg = the_args[3]
+        except IndexError:
+            print "==================ERROR===================="
+            print "Invalid Arguments passed for add_member_annotation"
+            print "add_member_annotation accepts four arguments"
+            print "1) the catalog ID and 2) the dataset ID 3) the member ID"
+            print "4) the annotations (JSON)"
+            print "Example: python catalog.py add_dataset_annotation 17 54'{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
+            print "==========================================="
+            return False
+        except KeyError, e:
+            print 'KeyError:',e
+            return False
+
+        if catalog_arg and dataset_arg and member_arg and annotation_arg:
+            _,response = wrap.catalogClient.add_member_annotations(catalog_arg,dataset_arg,member_arg,json.loads(annotation_arg))
+            print response
+            return True
+
+
     elif(the_command == 'query_datasets'):
         catalog_arg = None
         field_arg = None
@@ -430,11 +488,21 @@ def execute_commands(the_command, the_args):
         if print_text is True:
             for dataset in result:
                 print format_dataset_text(dataset)
+                return True
         else:
             print json.dumps(result)
+            return True
 
     elif(the_command == 'create_token_file'):
         wrap.create_token_file()
+        return True
+    elif(the_command == 'delete_token_file'):
+        if(wrap.check_authenticate()):
+            print '===Deleting access token==='
+            wrap.delete_token_file()
+        else:
+            print 'No authentication token detected'
+
         return True
 
     else:
@@ -447,12 +515,15 @@ if __name__ == "__main__":
                     "create_dataset","create_catalog","get_datasets",
                     "add_dataset_annotation","create_annotation_def",
                     "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations",
-                    "get_annotation_defs","test_command","get_datasets_by_name","query_datasets")
+                    "get_annotation_defs","test_command","get_datasets_by_name","query_datasets","add_member_annotation",'delete_token_file')
     flag_list = ("-text","-default_catalog")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
     the_flags = []      #Stores any flags detected in the arguments
     the_args = ''
+    log_file = 'log/GlobusCatalog-log.txt'
+    fail_log_file = 'log/GlobusCatalog-failed-log.txt'
+
 
     #Store authentication data in a local file
     token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
@@ -465,4 +536,15 @@ if __name__ == "__main__":
     the_args = split_args(command_list,sys.argv)
 
     #Execute the appropriate client action and check for appropriate args
-    execute_commands(the_command,the_args)
+    success = execute_command(the_command,the_args)
+
+    arg_list = ['python']+sys.argv
+    log_string = ' '.join(arg_list)
+
+    with open(log_file, "a") as myfile:
+        myfile.write(log_string+'\n')
+
+    if success is False:
+        with open(fail_log_file, "a") as myfile:
+            myfile.write(log_string+'\n')
+
