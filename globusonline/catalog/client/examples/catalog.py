@@ -493,6 +493,88 @@ def execute_command(the_command, the_args):
             print json.dumps(result)
             return True
 
+    elif(the_command == 'query_members'):
+        catalog_arg = None
+        dataset_arg = None
+        field_arg = None
+        operator_arg = None
+        value_arg = None
+
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                dataset_arg = the_args[0]
+                field_arg = the_args[1]
+                operator_arg = the_args[2]
+                value_arg = the_args[3]
+            else:
+                catalog_arg = the_args[0]
+                dataset_arg = the_args[1]
+                field_arg = the_args[2]
+                operator_arg = the_args[3]
+                value_arg = the_args[4]
+        except IndexError:
+            print "==================ERROR===================="
+            print "Invalid Arguments passed for query_members"
+            print "query_members accepts five arguments"
+            print "1) the catalog ID and 2)the dataset ID 3) the operator"
+            print "3) the field 4) the operator and 5) the value"
+            print "Example: python catalog.py query_members 17 84 name LIKE %New%"
+            print "==========================================="
+            return False
+        except KeyError, e:
+            print 'KeyError:',e
+            return False
+
+        try:
+            tmp_selector_list = [(field_arg,Op[operator_arg],value_arg)]
+            print catalog_arg
+            print dataset_arg
+            print tmp_selector_list
+            _,result = wrap.catalogClient.get_members(catalog_arg,dataset_arg,selector_list=tmp_selector_list)
+        except KeyError:
+            print 'Unknown query operator %s -- Known query Operators are'%operator_arg
+            print Op.keys()
+            return False
+
+        if print_text is True:
+            for dataset in result:
+                print format_member_text(dataset)
+                return True
+        else:
+            print json.dumps(result)
+            return True
+
+    elif(the_command == 'create_members'):
+        catalog_arg = None
+        dataset_arg = None
+        member_arg = None
+
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                dataset_arg = the_args[0]
+                member_arg = the_args[1]
+            else:
+                catalog_arg = the_args[0]
+                dataset_arg = the_args[1]
+                member_arg = the_args[2]
+        except IndexError:
+            print "==================ERROR===================="
+            print "Invalid Arguments passed for create_members"
+            print "create_members accepts three arguments"
+            print "1) the catalog ID and 2)the dataset ID"
+            print "3) the member JSON"
+            print "==========================================="
+            return False
+        except KeyError, e:
+            print 'KeyError:',e
+            return False
+
+        _,result = wrap.catalogClient.create_members(catalog_arg,dataset_arg,json.loads(member_arg))
+        print "CREATE MEMBER: Catalog:%s Dataset:%s Details:%s"%(catalog_arg,dataset_arg,member_arg)
+        return True
+
     elif(the_command == 'create_token_file'):
         wrap.create_token_file()
         return True
@@ -515,7 +597,8 @@ if __name__ == "__main__":
                     "create_dataset","create_catalog","get_datasets",
                     "add_dataset_annotation","create_annotation_def",
                     "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations",
-                    "get_annotation_defs","test_command","get_datasets_by_name","query_datasets","add_member_annotation",'delete_token_file')
+                    "get_annotation_defs","test_command","get_datasets_by_name","query_datasets",
+                    "add_member_annotation",'delete_token_file',"create_members", "query_members")
     flag_list = ("-text","-default_catalog")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
