@@ -205,14 +205,21 @@ class DatasetClient(rest_client.GoauthRestClient):
                                  urlquote(dataset_id),
                                  urlquote(member_id)))
 
-    def get_members(self, catalog_id, dataset_id):
+    def get_members(self, catalog_id, dataset_id, last_id=None, limit=100, selector_list=None):
         """Get a list of all members the user has permission to view.
+        Paging is done based on last id from the previous page, not numeric
+        offset.
 
         @return: list of member dictionaries
         """
-        return self._request("GET", "/catalog/id=%s/dataset/id=%s/member"
-                                    % (urlquote(catalog_id),
-                                       urlquote(dataset_id)))
+        params = dict(limit=limit)
+        qs = urllib.urlencode(params)
+        if selector_list is None:
+            selector_list = []
+        if last_id is not None:
+            selector_list += [("id", Op.GT, last_id)]
+        query = build_selector(selector_list)
+        return self._request("GET", "/catalog/id=%s/dataset/id=%s/member/%s?%s" % (urlquote(catalog_id), urlquote(dataset_id),query, qs))
 
     def create_annotation_def(self, catalog_id, annotation_name,
                               value_type, multivalued=False, unique=False):
