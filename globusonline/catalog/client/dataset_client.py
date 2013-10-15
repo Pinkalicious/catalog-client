@@ -29,7 +29,11 @@ class DatasetClient(rest_client.GoauthRestClient):
 
     def create_catalog(self, catalog_dict=None, **kw):
         """Create a catalog with the given name and addional attributes
-        specified in a dictionary and/or keyword parameters.
+        specified in a dictionary and/or keyword parameters. Note that
+        most of the attributes of interest (including name and description)
+        must be in a dictionary mapped from the 'config' key:
+
+         client.create_catalog(config=dict(name=..., description=...))
 
         @return: dictionary of catalog properties (most notably 'id')
         """
