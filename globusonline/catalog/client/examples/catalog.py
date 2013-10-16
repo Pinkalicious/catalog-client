@@ -94,9 +94,14 @@ def execute_command(the_command, the_args):
     elif(the_command == 'create_catalog'):
         try:
             arg_dict = json.loads(the_args[0])
-            print "CREATE CATALOG - %s"%(arg_dict)
-            catalog_list = wrap.catalogClient.create_catalog(arg_dict)
-            return catalog_list
+            #print "CREATE CATALOG - %s"%(arg_dict)
+            try:
+                _,catalog_list = wrap.catalogClient.create_catalog(arg_dict)
+                print catalog_list['id']
+            except Exception, e:
+                print e
+                return False
+            return True
         except (IndexError, AttributeError):
             print "==================ERROR===================="
             print "Invalid Arguments passed for create_catalog"
@@ -152,9 +157,13 @@ def execute_command(the_command, the_args):
             print 'KeyError:',e
 
         if catalog_arg is not None and annotation_arg is not None:
-                print "CREATE DATASET - Catalog ID:%s Annotations:%s"%(catalog_arg,annotation_arg)
-                wrap.catalogClient.create_dataset(catalog_arg,json.loads(annotation_arg))
-                return True
+                #print "CREATE DATASET - Catalog ID:%s Annotations:%s"%(catalog_arg,annotation_arg)
+                    try:
+                        _,result = wrap.catalogClient.create_dataset(catalog_arg,json.loads(annotation_arg))
+                        print "%s,%s"%(catalog_arg,result['id'])
+                    except Exception, e:
+                        print e
+                
        
 
     elif(the_command == 'get_datasets'):
@@ -169,7 +178,7 @@ def execute_command(the_command, the_args):
         except IndexError:
             print "==================ERROR===================="
             print "Invalid Arguments passed for get_datasets"
-            print "create_dataset accepts one arguments 1) the catalog ID"
+            print "get_datasets accepts one arguments 1) the catalog ID"
             print "Example: python catalog.py get_datasets 17"
             print "==========================================="
             return False
