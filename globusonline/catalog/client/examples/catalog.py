@@ -570,10 +570,14 @@ def execute_command(the_command, the_args):
         except KeyError, e:
             print 'KeyError:',e
             return False
-
-        _,result = wrap.catalogClient.create_members(catalog_arg,dataset_arg,json.loads(member_arg))
-        print "CREATE MEMBER: Catalog:%s Dataset:%s Details:%s"%(catalog_arg,dataset_arg,member_arg)
+        try:
+            _,result = wrap.catalogClient.create_members(catalog_arg,dataset_arg,json.loads(member_arg))
+            print "%s,%s,%s"%(catalog_arg,dataset_arg,result['id'])
+        except Exception, e:
+            print e
+            return False
         return True
+
 
     elif(the_command == 'create_token_file'):
         wrap.create_token_file()

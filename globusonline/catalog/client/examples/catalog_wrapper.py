@@ -4,6 +4,7 @@ from globusonline.catalog.client.dataset_client import DatasetClient
 from globusonline.transfer.api_client import TransferAPIClient, Transfer
 import re
 import collections
+import os
 
 class CatalogWrapper:
 ## Catalog wrapper wraps the features of the Globus Catalog API, and includes an interface to interact with Globus Transfer 
@@ -82,7 +83,16 @@ class CatalogWrapper:
         file = open(self.token_file,'w')
         file.write(tmpToken.token)
         self.token = tmpToken.token
-        return True        
+        return True  
+
+    def delete_token_file(self):
+        try:
+            os.remove(self.token_file)
+        except Exception, e:
+            print e
+            return False
+        print 'Authentication Token Removed from:',self.token_file
+        return True      
 
     ##Transfer/Catalog Interfacing    
     def set_destination_endpoint(self, destination_endpoint=None):
