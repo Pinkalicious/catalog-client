@@ -342,7 +342,7 @@ def execute_command(the_command, the_args):
             print "Invalid Arguments passed for add_dataset_annotation"
             print "add_dataset_annotation accepts three arguments"
             print "1) the catalog ID and 2) the dataset ID 3) Annotation list"
-            print "Example: python catalog.py add_dataset_annotation 17 54'{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
+            print "Example: python catalog.py add_dataset_annotation 17 54 '{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
             print "==========================================="
             return False
         except KeyError, e:
@@ -497,7 +497,7 @@ def execute_command(the_command, the_args):
         if print_text is True:
             for dataset in result:
                 print format_dataset_text(dataset)
-                return True
+            return True
         else:
             print json.dumps(result)
             return True
