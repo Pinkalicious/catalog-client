@@ -10,8 +10,8 @@ if __name__ == "__main__":
 	destination_endpoint = 'go#ep2'
 	
 	#Store authentication data in a local file
-    token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
-    wrap = CatalogWrapper(token_file=token_file)
+	token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
+	wrap = CatalogWrapper(token_file=token_file)
 
  #EXAMPLES FOR RAY   
  #    #CREATE DATASET   -- RETURNS the parent catalog ID and the resultant dataset ID
