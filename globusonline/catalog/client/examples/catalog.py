@@ -24,6 +24,7 @@ def check_flags(the_flag_list, the_args):
     global the_flags
     global print_text
     global default_catalog
+    global show_output
 
     for arg in the_args:
         if arg in the_flag_list:
@@ -31,8 +32,14 @@ def check_flags(the_flag_list, the_args):
     for flag in the_flags:
         if flag == "-text":
             print_text = True
-        if flag == "-default_catalog":
-            default_catalog = os.getenv('DEFAULT_CATALOG_ID')
+        if flag == "-dc":
+            default_catalog = os.getenv('GCAT_DEFAULT_CATALOG_ID')
+        if flag == "-x": #Suppress output
+            show_output = False
+
+def check_environment():
+    if os.getenv('GCAT_SHOW_OUTPUT') == 0: 
+        show_output = False
 
 
 def format_catalog_text(the_catalog):
@@ -73,6 +80,7 @@ def execute_command(the_command, the_args):
     global wrap
     if(the_command == 'get_catalogs'):
         #takes no args, returns all visible catalogs
+
         try:
             _,catalog_list = wrap.catalogClient.get_catalogs()
             if print_text is True:
@@ -81,9 +89,11 @@ def execute_command(the_command, the_args):
                 print 'ID) Catalog Name - [Owner] - Catalog Description'
                 print "============================================================"
                 for catalog in catalog_list:
-                   print format_catalog_text(catalog)
+                    if show_output:
+                        print format_catalog_text(catalog)
             else:
-                print json.dumps(catalog_list)
+                if show_output:
+                    print json.dumps(catalog_list)
             return True
         except KeyError, e:
             #print e
@@ -97,19 +107,23 @@ def execute_command(the_command, the_args):
             #print "CREATE CATALOG - %s"%(arg_dict)
             try:
                 _,catalog_list = wrap.catalogClient.create_catalog(arg_dict)
-                print catalog_list['id']
+                if show_output:
+                    print catalog_list['id']
             except Exception, e:
-                print e
+                if show_output:
+                    print e
                 return False
             return True
         except (IndexError, AttributeError):
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for create_catalog"
-            print "create_catalog accepts one argument 1) catalog property list"
-            print "Example: python catalog.py create_catalog '{\"config\": {\"name\": \"JSON CAT NEW\"}}'"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for create_catalog"
+                print "create_catalog accepts one argument 1) catalog property list"
+                print "Example: python catalog.py create_catalog '{\"config\": {\"name\": \"JSON CAT NEW\"}}'"
+                print "==========================================="
         except KeyError, e:
-            print e
+            if show_output:
+                print e
             return False
         else:
             return False
@@ -119,17 +133,20 @@ def execute_command(the_command, the_args):
         #@arg[1] = verify -- True to verify deletion
         try:
             if(the_args[0] != '' and (the_args[1] == "True" or the_args[1]=="true" or the_args[1]==True)):
-                print "DELETE CATALOG - Catalog ID:%s"%(the_args[0])
-                wrap.catalogClient.delete_catalog(the_args[0])
+                if show_output:
+                    print "DELETE CATALOG - Catalog ID:%s"%(the_args[0])
+                    wrap.catalogClient.delete_catalog(the_args[0])
                 return True
         except IndexError:
-                print "==================ERROR===================="
-                print "Invalid Arguments passed for delete_catalog"
-                print "delete_catalog accepts two arguments 1) the catalog ID and 2) a verification to delete (i.e. true)"
-                print "Example: python catalog.py delete_catalog 1234 true"
-                print "==========================================="
+                if show_output:
+                    print "==================ERROR===================="
+                    print "Invalid Arguments passed for delete_catalog"
+                    print "delete_catalog accepts two arguments 1) the catalog ID and 2) a verification to delete (i.e. true)"
+                    print "Example: python catalog.py delete_catalog 1234 true"
+                    print "==========================================="
         except KeyError, e:
-            print e
+            if show_output:
+                print e
             return False
         else:
             return False
@@ -148,21 +165,26 @@ def execute_command(the_command, the_args):
                 catalog_arg = the_args[0]
                 annotation_arg = the_args[1]
         except IndexError, e:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for create_dataset"
-            print "create_dataset accepts two arguments 1) the catalog ID and 2) a list of annotations"
-            print "Example: python catalog.py create_dataset '{\"name\":\"New Dataset\"}'"
-            print "==========================================="
+            
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for create_dataset"
+                print "create_dataset accepts two arguments 1) the catalog ID and 2) a list of annotations"
+                print "Example: python catalog.py create_dataset '{\"name\":\"New Dataset\"}'"
+                print "==========================================="
         except KeyError:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
 
         if catalog_arg is not None and annotation_arg is not None:
                 #print "CREATE DATASET - Catalog ID:%s Annotations:%s"%(catalog_arg,annotation_arg)
                     try:
                         _,result = wrap.catalogClient.create_dataset(catalog_arg,json.loads(annotation_arg))
-                        print "%s,%s"%(catalog_arg,result['id'])
+                        if show_output:
+                            print "%s,%s"%(catalog_arg,result['id'])
                     except Exception, e:
-                        print e
+                        if show_output:
+                            print e
                 
        
 
@@ -176,28 +198,32 @@ def execute_command(the_command, the_args):
             else:
                 catalog_arg = the_args[0]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for get_datasets"
-            print "get_datasets accepts one arguments 1) the catalog ID"
-            print "Example: python catalog.py get_datasets 17"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for get_datasets"
+                print "get_datasets accepts one arguments 1) the catalog ID"
+                print "Example: python catalog.py get_datasets 17"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         if catalog_arg is not None:
             _,cur_datasets= wrap.catalogClient.get_datasets(catalog_arg)
             
             if print_text is True:
-                print "============================================================"
-                print "*More detailed dataset information available in JSON format*"
-                print "ID) Dataset Name  - [Owner] - <Datset Labels>"
-                print "============================================================"
-                for dataset in cur_datasets:
-                    print format_dataset_text(dataset)
+                if show_output:
+                    print "============================================================"
+                    print "*More detailed dataset information available in JSON format*"
+                    print "ID) Dataset Name  - [Owner] - <Datset Labels>"
+                    print "============================================================"
+                    for dataset in cur_datasets:
+                        print format_dataset_text(dataset)
             else:
-                print json.dumps(cur_datasets)
+                if show_output:
+                    print json.dumps(cur_datasets)
             return True
 
 
@@ -227,22 +253,26 @@ def execute_command(the_command, the_args):
                     pass
 
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for create_annotation_def"
-            print "create_dataset accepts three arguments 1) the catalog ID"
-            print "2) Annotation Name 3) Annotation Value"
-            print "Example: python catalog.py create_annotation_def 48 'datalocation' 'text'"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for create_annotation_def"
+                print "create_dataset accepts three arguments 1) the catalog ID"
+                print "2) Annotation Name 3) Annotation Value"
+                print "Example: python catalog.py create_annotation_def 48 'datalocation' 'text'"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         bool_multivalue_arg = multivalue_arg in ['true','True','t','T','1']    
-        print "CREATE ANNOTATION DEF - Catalog ID:%s  Name:%s  Type:%s"%(catalog_arg,annotation_arg,value_arg)
+        if show_output:
+            print "CREATE ANNOTATION DEF - Catalog ID:%s  Name:%s  Type:%s"%(catalog_arg,annotation_arg,value_arg)
         response = wrap.catalogClient.create_annotation_def(catalog_id=catalog_arg, annotation_name=annotation_arg, 
                                                             value_type=value_arg, multivalued=bool_multivalue_arg)
-        print response
+        if show_output:
+            print response
         return response
         
 
@@ -256,14 +286,16 @@ def execute_command(the_command, the_args):
             else:
                 catalog_arg = the_args[0]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for get_annotation_defs"
-            print "get_annotation_defs accepts one arguments 1) the catalog ID"
-            print "Example: python catalog.py get_annotation_defs 17"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for get_annotation_defs"
+                print "get_annotation_defs accepts one arguments 1) the catalog ID"
+                print "Example: python catalog.py get_annotation_defs 17"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         if catalog_arg:
@@ -271,13 +303,15 @@ def execute_command(the_command, the_args):
        
 
         if print_text is True:
-            print "============================================================"
-            print "Current catalog Annotations "
-            print "============================================================"
-            for annotation in annotation_defs:
-                print annotation
+            if show_output:
+                print "============================================================"
+                print "Current catalog Annotations "
+                print "============================================================"
+                for annotation in annotation_defs:
+                    print annotation
         else:
-            print json.dumps(annotation_defs) 
+            if show_output:
+                print json.dumps(annotation_defs) 
 
     elif(the_command == 'get_dataset_annotations'):
         #@arg[0] = catalog_id -- INT
@@ -293,31 +327,36 @@ def execute_command(the_command, the_args):
                 catalog_arg = the_args[0]
                 dataset_arg = the_args[1]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for get_dataset_annotations"
-            print "get_dataset_annotations accepts two arguments"
-            print "1) the catalog ID and 2) the dataset ID"
-            print "Example: python catalog.py get_annotation_defs 17"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for get_dataset_annotations"
+                print "get_dataset_annotations accepts two arguments"
+                print "1) the catalog ID and 2) the dataset ID"
+                print "Example: python catalog.py get_annotation_defs 17"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         if catalog_arg and dataset_arg:
             _,tmp_result = wrap.catalogClient.get_dataset_annotations(catalog_arg,dataset_arg,annotation_list=['annotations_present'])
             _,dataset_annotations = wrap.catalogClient.get_dataset_annotations(catalog_arg,dataset_arg,annotation_list=tmp_result[0]['annotations_present'])
         else:
-            print 'Invalid arguments passed'
+            if show_output:
+                print 'Invalid arguments passed'
             return False
 
         if print_text is True:
-            print "Tag:Value"
-            for record in dataset_annotations:
-                for annotation_key in record:
-                    print "%s:%s"%(annotation_key, record[annotation_key])
+            if show_output:
+                print "Tag:Value"
+                for record in dataset_annotations:
+                    for annotation_key in record:
+                        print "%s:%s"%(annotation_key, record[annotation_key])
         else:   
-            print json.dumps(dataset_annotations)
+            if show_output:
+                print json.dumps(dataset_annotations)
         return True
 
     elif(the_command == 'add_dataset_annotation'):
@@ -338,22 +377,25 @@ def execute_command(the_command, the_args):
                 dataset_arg = the_args[1]
                 annotation_arg = the_args[2]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for add_dataset_annotation"
-            print "add_dataset_annotation accepts three arguments"
-            print "1) the catalog ID and 2) the dataset ID 3) Annotation list"
-            print "Example: python catalog.py add_dataset_annotation 17 54 '{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for add_dataset_annotation"
+                print "add_dataset_annotation accepts three arguments"
+                print "1) the catalog ID and 2) the dataset ID 3) Annotation list"
+                print "Example: python catalog.py add_dataset_annotation 17 54 '{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
 
         if catalog_arg and dataset_arg and annotation_arg:
             #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1],the_args[2])
             _,response = wrap.catalogClient.add_dataset_annotations(catalog_arg,dataset_arg,json.loads(annotation_arg))
-            print response
+            if show_output:
+                print response
             return True
 
     
@@ -376,14 +418,17 @@ def execute_command(the_command, the_args):
                 dataset_arg = the_args[1]
                 verify_arg = the_args[2]
         except IndexError,e:
-            print 'Index Error:',e
+            if show_output:
+                print 'Index Error:',e
             return False
         except KeyError, e:
-            print e
+            if show_output:
+                print e
             return False
 
         if catalog_arg and dataset_arg and (verify_arg == "True" or verify_arg=="true" or verify_arg==True):
-            print "DELETE DATASET - Catalog ID:%s Dataset ID: %s"%(catalog_arg,dataset_arg)
+            if show_output:
+                print "DELETE DATASET - Catalog ID:%s Dataset ID: %s"%(catalog_arg,dataset_arg)
             wrap.catalogClient.delete_dataset(catalog_arg,dataset_arg)
             return True
        
@@ -407,14 +452,16 @@ def execute_command(the_command, the_args):
         if catalog_arg and dataset_arg:
             _,cur_members = wrap.catalogClient.get_members(catalog_arg,dataset_arg)
             if print_text is True:
-                print "============================================================"
-                print "*More detailed member information available in JSON format*"
-                print 'ID) Reference Dataset - Member Type - URI'
-                print "============================================================"
-                for member in cur_members:
-                    print format_member_text(member)
+                if show_output:
+                    print "============================================================"
+                    print "*More detailed member information available in JSON format*"
+                    print 'ID) Reference Dataset - Member Type - URI'
+                    print "============================================================"
+                    for member in cur_members:
+                        print format_member_text(member)
             else:
-                print json.dumps(cur_members)
+                if show_output:
+                    print json.dumps(cur_members)
                 return True
 
     elif(the_command == 'add_member_annotation'):
@@ -438,21 +485,24 @@ def execute_command(the_command, the_args):
                 member_arg = the_args[2]
                 annotation_arg = the_args[3]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for add_member_annotation"
-            print "add_member_annotation accepts four arguments"
-            print "1) the catalog ID and 2) the dataset ID 3) the member ID"
-            print "4) the annotations (JSON)"
-            print "Example: python catalog.py add_dataset_annotation 17 54'{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for add_member_annotation"
+                print "add_member_annotation accepts four arguments"
+                print "1) the catalog ID and 2) the dataset ID 3) the member ID"
+                print "4) the annotations (JSON)"
+                print "Example: python catalog.py add_dataset_annotation 17 54'{\"test-annotation\":\"true\",\"material\":\"copper\"}'"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         if catalog_arg and dataset_arg and member_arg and annotation_arg:
             _,response = wrap.catalogClient.add_member_annotations(catalog_arg,dataset_arg,member_arg,json.loads(annotation_arg))
-            print response
+            if show_output:
+                print response
             return True
 
 
@@ -474,32 +524,37 @@ def execute_command(the_command, the_args):
                 operator_arg = the_args[2]
                 value_arg = the_args[3]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for query_datasets"
-            print "query_datasets_annotation accepts four arguments"
-            print "1) the catalog ID and 2) the field 3) the operator"
-            print "4) the value"
-            print "Example: python catalog.py query_datasets 17 name LIKE %New%"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for query_datasets"
+                print "query_datasets_annotation accepts four arguments"
+                print "1) the catalog ID and 2) the field 3) the operator"
+                print "4) the value"
+                print "Example: python catalog.py query_datasets 17 name LIKE %New%"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         try:
             selector_list = [(field_arg,Op[operator_arg],value_arg)]
             _,result = wrap.catalogClient.get_datasets(catalog_arg, selector_list=selector_list)
         except KeyError:
-            print 'Unknown query operator %s -- Known query Operators are'%operator_arg
-            print Op.keys()
+            if show_output:
+                print 'Unknown query operator %s -- Known query Operators are'%operator_arg
+                print Op.keys()
             return False
 
         if print_text is True:
-            for dataset in result:
-                print format_dataset_text(dataset)
+            if show_output:
+                for dataset in result:
+                    print format_dataset_text(dataset)
             return True
         else:
-            print json.dumps(result)
+            if show_output:
+                print json.dumps(result)
             return True
 
     elif(the_command == 'query_members'):
@@ -523,35 +578,41 @@ def execute_command(the_command, the_args):
                 operator_arg = the_args[3]
                 value_arg = the_args[4]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for query_members"
-            print "query_members accepts five arguments"
-            print "1) the catalog ID and 2)the dataset ID 3) the operator"
-            print "3) the field 4) the operator and 5) the value"
-            print "Example: python catalog.py query_members 17 84 name LIKE %New%"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for query_members"
+                print "query_members accepts five arguments"
+                print "1) the catalog ID and 2)the dataset ID 3) the operator"
+                print "3) the field 4) the operator and 5) the value"
+                print "Example: python catalog.py query_members 17 84 name LIKE %New%"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
 
         try:
             tmp_selector_list = [(field_arg,Op[operator_arg],value_arg)]
-            print catalog_arg
-            print dataset_arg
-            print tmp_selector_list
+            if show_output:
+                print catalog_arg
+                print dataset_arg
+                print tmp_selector_list
             _,result = wrap.catalogClient.get_members(catalog_arg,dataset_arg,selector_list=tmp_selector_list)
         except KeyError:
-            print 'Unknown query operator %s -- Known query Operators are'%operator_arg
-            print Op.keys()
+            if show_output:
+                print 'Unknown query operator %s -- Known query Operators are'%operator_arg
+                print Op.keys()
             return False
 
         if print_text is True:
-            for dataset in result:
-                print format_member_text(dataset)
-                return True
+            if show_output:
+                for dataset in result:
+                    print format_member_text(dataset)
+            return True
         else:
-            print json.dumps(result)
+            if show_output:
+                print json.dumps(result)
             return True
 
     elif(the_command == 'create_members'):
@@ -569,21 +630,25 @@ def execute_command(the_command, the_args):
                 dataset_arg = the_args[1]
                 member_arg = the_args[2]
         except IndexError:
-            print "==================ERROR===================="
-            print "Invalid Arguments passed for create_members"
-            print "create_members accepts three arguments"
-            print "1) the catalog ID and 2)the dataset ID"
-            print "3) the member JSON"
-            print "==========================================="
+            if show_output:
+                print "==================ERROR===================="
+                print "Invalid Arguments passed for create_members"
+                print "create_members accepts three arguments"
+                print "1) the catalog ID and 2)the dataset ID"
+                print "3) the member JSON"
+                print "==========================================="
             return False
         except KeyError, e:
-            print 'KeyError:',e
+            if show_output:
+                print 'KeyError:',e
             return False
         try:
             _,result = wrap.catalogClient.create_members(catalog_arg,dataset_arg,json.loads(member_arg))
-            print "%s,%s,%s"%(catalog_arg,dataset_arg,result['id'])
+            if show_output:
+                print "%s,%s,%s"%(catalog_arg,dataset_arg,result['id'])
         except Exception, e:
-            print e
+            if show_output:
+                print e
             return False
         return True
 
@@ -593,15 +658,18 @@ def execute_command(the_command, the_args):
         return True
     elif(the_command == 'delete_token_file'):
         if(wrap.check_authenticate()):
-            print '===Deleting access token==='
+            if show_output:
+                print '===Deleting access token==='
             wrap.delete_token_file()
         else:
-            print 'No authentication token detected'
+            if show_output:
+                print 'No authentication token detected'
 
         return True
 
     else:
-        print 'Invalid Command'
+        if show_output:
+            print 'Invalid Command'
         return False
 
 if __name__ == "__main__":
@@ -612,13 +680,14 @@ if __name__ == "__main__":
                     "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations",
                     "get_annotation_defs","test_command","get_datasets_by_name","query_datasets",
                     "add_member_annotation",'delete_token_file',"create_members", "query_members")
-    flag_list = ("-text","-default_catalog")
+    flag_list = ("-text","-dc","-x")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
     the_flags = []      #Stores any flags detected in the arguments
     the_args = ''
     log_file = 'log/GlobusCatalog-log.txt'
     fail_log_file = 'log/GlobusCatalog-failed-log.txt'
+    show_output = True
 
 
     #Store authentication data in a local file
@@ -627,6 +696,9 @@ if __name__ == "__main__":
 
     #Check for any recognized flags from flag_list
     check_flags(flag_list,sys.argv)
+
+    #Check for any recognized environment variables
+    check_environment()
  
     #Condition the input argument list. Slice at the first recognized command from command_list and set the_command
     the_args = split_args(command_list,sys.argv)
