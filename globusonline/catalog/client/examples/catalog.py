@@ -38,7 +38,9 @@ def check_flags(the_flag_list, the_args):
             show_output = False
 
 def check_environment():
-    if os.getenv('GCAT_SHOW_OUTPUT') == 0: 
+    global show_output
+    
+    if os.getenv('GCAT_SHOW_OUTPUT') == '0': 
         show_output = False
 
 
