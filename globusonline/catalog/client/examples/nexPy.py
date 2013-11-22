@@ -95,3 +95,9 @@ if __name__ == "__main__":
 		except Exception, e:
 			pass
 
+
+	#CASE: Transfer all files from a Dataset within a Catalog to a destination endpoint
+	print "\n\n== Testing Transfer =="
+	wrap.set_destination_endpoint(destination_endpoint)    #This is the endpoint name where you want to transfer the files to
+	wrap.transfer_members(catalog_id,dataset_id)
+
