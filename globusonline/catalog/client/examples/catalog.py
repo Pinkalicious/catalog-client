@@ -433,7 +433,75 @@ def execute_command(the_command, the_args):
                 print "DELETE DATASET - Catalog ID:%s Dataset ID: %s"%(catalog_arg,dataset_arg)
             wrap.catalogClient.delete_dataset(catalog_arg,dataset_arg)
             return True
-       
+
+    elif(the_command == 'add_dataset_acl'):
+        #@arg[0] = catalog ID -- INT
+        #@arg[1] = dataset ID -- INT
+        #@arg[2] = acl
+        catalog_arg = None
+        dataset_arg = None
+        acl_arg = None
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                dataset_arg = the_args[0]
+                acl_arg = the_args[1]
+            else:
+                catalog_arg = the_args[0]
+                dataset_arg = the_args[1]
+                acl_arg  = the_args[2]
+        except IndexError,e:
+            print e
+        
+        try:
+            response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, acl_arg)
+            print response
+        except Exception, e:
+            print e
+
+    elif(the_command == 'add_dataset_acl_recursive'):
+        #@arg[0] = catalog ID -- INT
+        #@arg[1] = acl
+        catalog_arg = None
+        acl_arg = None
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                acl_arg = the_args[0]
+            else:
+                catalog_arg = the_args[0]
+                acl_arg  = the_args[1]
+        except IndexError,e:
+            print e
+
+        _,result = wrap.catalogClient.get_datasets(catalog_arg)
+        for dataset in result:
+            print dataset['id']  
+            try:
+                response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset['id'], acl_arg)
+                print response
+            except Exception, e:
+                print e
+
+    elif(the_command == 'get_dataset_acl'):
+        #@arg[0] = catalog ID -- INT
+        #@arg[1] = dataset ID -- INT
+        catalog_arg = None
+        dataset_arg = None
+        acl_arg = None
+        try:
+            if default_catalog:
+                catalog_arg = default_catalog
+                dataset_arg = the_args[0]
+            else:
+                catalog_arg = the_args[0]
+                dataset_arg = the_args[1]
+        except IndexError,e:
+            print e
+
+        response = wrap.catalogClient.get_dataset_acl(catalog_arg, dataset_arg)
+        print response
+
 
     elif(the_command == 'get_dataset_members'):
         #@arg[0] = catalog ID -- INT
@@ -681,7 +749,8 @@ if __name__ == "__main__":
                     "add_dataset_annotation","create_annotation_def",
                     "delete_catalog","delete_dataset","get_dataset_annotations","get_member_annotations",
                     "get_annotation_defs","test_command","get_datasets_by_name","query_datasets",
-                    "add_member_annotation",'delete_token_file',"create_members", "query_members")
+                    "add_member_annotation",'delete_token_file',"create_members", "query_members", 
+                    "add_dataset_acl", "get_dataset_acl", "add_dataset_acl_recursive")
     flag_list = ("-text","-dc","-x")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
