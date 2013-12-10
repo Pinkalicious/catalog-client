@@ -454,8 +454,9 @@ def execute_command(the_command, the_args):
             print e
         
         try:
-            response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, acl_arg)
-            print response
+            _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, acl_arg)
+            if show_output:
+                print response
         except Exception, e:
             print e
 
@@ -478,8 +479,9 @@ def execute_command(the_command, the_args):
         for dataset in result:
             print dataset['id']  
             try:
-                response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset['id'], acl_arg)
-                print response
+                _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset['id'], acl_arg)
+                if show_output:
+                    print response
             except Exception, e:
                 print e
 
@@ -499,8 +501,9 @@ def execute_command(the_command, the_args):
         except IndexError,e:
             print e
 
-        response = wrap.catalogClient.get_dataset_acl(catalog_arg, dataset_arg)
-        print response
+        _,response = wrap.catalogClient.get_dataset_acl(catalog_arg, dataset_arg)
+        if show_output:
+            print response
 
 
     elif(the_command == 'get_dataset_members'):
