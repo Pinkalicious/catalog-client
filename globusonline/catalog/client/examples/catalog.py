@@ -454,7 +454,7 @@ def execute_command(the_command, the_args):
             print e
         
         try:
-            _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, acl_arg)
+            _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, json.loads(acl_arg))
             if show_output:
                 print response
         except Exception, e:
@@ -479,7 +479,7 @@ def execute_command(the_command, the_args):
         for dataset in result:
             print dataset['id']  
             try:
-                _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset['id'], acl_arg)
+                _,response = wrap.catalogClient.add_dataset_acl(catalog_arg, dataset['id'], json.loads(acl_arg))
                 if show_output:
                     print response
             except Exception, e:
