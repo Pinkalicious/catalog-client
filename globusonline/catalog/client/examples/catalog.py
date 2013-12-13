@@ -32,7 +32,7 @@ def check_flags(the_flag_list, the_args):
     for flag in the_flags:
         if flag == "-text":
             print_text = True
-        if flag == "-dc":
+        if flag == "-dc" or flag == "default_catalog":
             default_catalog = os.getenv('GCAT_DEFAULT_CATALOG_ID')
         if flag == "-x": #Suppress output
             show_output = False
@@ -85,7 +85,7 @@ def execute_command(the_command, the_args):
 
         try:
             _,catalog_list = wrap.catalogClient.get_catalogs()
-            if print_text is True:
+            if print_text:
                 print "============================================================"
                 print "*More detailed catalog information available in JSON format*"
                 print 'ID) Catalog Name - [Owner] - Catalog Description'
@@ -302,9 +302,8 @@ def execute_command(the_command, the_args):
 
         if catalog_arg:
             _,annotation_defs = wrap.catalogClient.get_annotation_defs(catalog_arg)
-       
 
-        if print_text is True:
+        if print_text:
             if show_output:
                 print "============================================================"
                 print "Current catalog Annotations "
@@ -409,7 +408,6 @@ def execute_command(the_command, the_args):
         dataset_arg = None
         verify_arg = None
 
-
         try:
             if default_catalog:
                 catalog_arg = default_catalog
@@ -438,18 +436,25 @@ def execute_command(the_command, the_args):
         #@arg[0] = catalog ID -- INT
         #@arg[1] = dataset ID -- INT
         #@arg[2] = acl
+        global default_catalog
         catalog_arg = None
         dataset_arg = None
         acl_arg = None
+
+        print default_catalog
+        print the_args
         try:
             if default_catalog:
+                print 'here'
                 catalog_arg = default_catalog
                 dataset_arg = the_args[0]
                 acl_arg = the_args[1]
             else:
+                print 's'
                 catalog_arg = the_args[0]
                 dataset_arg = the_args[1]
                 acl_arg  = the_args[2]
+
         except IndexError,e:
             print e
         
@@ -505,7 +510,6 @@ def execute_command(the_command, the_args):
         if show_output:
             print response
 
-
     elif(the_command == 'get_dataset_members'):
         #@arg[0] = catalog ID -- INT
         #@arg[1] = dataset ID -- INT
@@ -524,7 +528,7 @@ def execute_command(the_command, the_args):
 
         if catalog_arg and dataset_arg:
             _,cur_members = wrap.catalogClient.get_members(catalog_arg,dataset_arg)
-            if print_text is True:
+            if print_text:
                 if show_output:
                     print "============================================================"
                     print "*More detailed member information available in JSON format*"
@@ -678,7 +682,7 @@ def execute_command(the_command, the_args):
                 print Op.keys()
             return False
 
-        if print_text is True:
+        if print_text:
             if show_output:
                 for dataset in result:
                     print format_member_text(dataset)
@@ -737,7 +741,6 @@ def execute_command(the_command, the_args):
         else:
             if show_output:
                 print 'No authentication token detected'
-
         return True
 
     else:
@@ -754,7 +757,7 @@ if __name__ == "__main__":
                     "get_annotation_defs","test_command","get_datasets_by_name","query_datasets",
                     "add_member_annotation",'delete_token_file',"create_members", "query_members", 
                     "add_dataset_acl", "get_dataset_acl", "add_dataset_acl_recursive")
-    flag_list = ("-text","-dc","-x")
+    flag_list = ("-text","-dc","default_catalog","-x")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
     the_flags = []      #Stores any flags detected in the arguments
@@ -762,7 +765,6 @@ if __name__ == "__main__":
     log_file = 'log/GlobusCatalog-log.txt'
     fail_log_file = 'log/GlobusCatalog-failed-log.txt'
     show_output = True
-
 
     #Store authentication data in a local file
     token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
