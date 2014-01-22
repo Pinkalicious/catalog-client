@@ -436,7 +436,6 @@ def execute_command(the_command, the_args):
         #@arg[0] = catalog ID -- INT
         #@arg[1] = dataset ID -- INT
         #@arg[2] = acl
-        global default_catalog
         catalog_arg = None
         dataset_arg = None
         acl_arg = None
