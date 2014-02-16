@@ -243,6 +243,11 @@ class DatasetClient(rest_client.GoauthRestClient):
         return self._request("GET", "/catalog/id=%s/annotation_def"
                                     % (urlquote(catalog_id)))
 
+    def delete_annotation_def(self, catalog_id, annotation_name):
+        return self._request("DELETE", "/catalog/id=%s/annotation_def/%s"
+                                    % (urlquote(catalog_id),
+                                       urlquote(annotation_name)))
+
     def add_member_annotations(self, catalog_id, dataset_id, member_id,
                                annotation_dict):
         path = ("/catalog/id=%s/dataset/id=%s/member/id=%s/annotation"
