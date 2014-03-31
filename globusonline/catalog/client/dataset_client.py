@@ -268,6 +268,23 @@ class DatasetClient(rest_client.GoauthRestClient):
             path = "%s/%s" % (path, pattern)
         return self._request("GET", path)
 
+    def get_all_member_annotations(self, catalog_id, dataset_id, member_list, annotation_list=None, limit=100):
+        path = ("/catalog/id=%s/dataset/id=%s/member"
+                % (urlquote(catalog_id), urlquote(dataset_id)))
+        print path
+
+        params = dict(limit=limit)
+        qs = urllib.urlencode(params)
+
+        if annotation_list:
+            # TODO: handle tag=value patterns, useful for multivalued
+            # tags
+            member_pattern = ";".join(urlquote(x) for x in annotation_list)
+            annotation_pattern = ";".join(urlquote(y) for y in annotation_list)
+            path = "%s/%s/annotation/%s?%s" % (path, member_pattern, annotation_pattern,qs)
+            print path
+        return self._request("GET", path)
+
     def delete_member_annotation(self, catalog_id, dataset_id, member_id,
                                  annotation_name, annotation_value=None):
         """Delete the given annotation and/or value from the specified
