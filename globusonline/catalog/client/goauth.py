@@ -20,6 +20,7 @@ When run as a script, takes username as first and only argument, and prompts
 for password. The cookie is printed to stdout.
 """
 
+import os
 import sys
 import urlparse
 import getpass
@@ -29,7 +30,6 @@ import base64
 import httplib
 
 from globusonline.catalog.client.verified_https import VerifiedHTTPSConnection
-from globusonline.catalog.client.ca import get_ca
 
 HOST = "graph.api.test.globuscs.info"
 GOAUTH_PATH = "/goauth/token?grant_type=client_credentials"
@@ -46,6 +46,13 @@ class GOCredentialsError(GOAuthError):
     def __init__(self):
         GOAuthError.__init__(self, "Wrong username or password")
 
+
+def get_default_userpass():
+    user = os.getenv("GCAT_DEFAULT_USER")
+    if user == None or user == "":
+        return None
+    password = os.getenv("GCAT_DEFAULT_PASSWORD")
+    return [user, password]
 
 def get_access_token(username=None, password=None, ca_certs=None):
     """Get a goauth access token from nexus.
@@ -65,12 +72,23 @@ def get_access_token(username=None, password=None, ca_certs=None):
              token field, but username/password may be useful for caching
              authentication information when using the prompt.
     """
+    
+    userpass_list = get_default_userpass()
+    
     if username is None:
-        print "Globus Online Username: ",
-        sys.stdout.flush()
-        username = sys.stdin.readline().strip()
+        if not userpass_list == None: 
+            username = userpass_list[0]
+            print "Default user name: ", username
+        else:
+            print "Globus Online Username: ",
+            sys.stdout.flush()
+            username = sys.stdin.readline().strip()
     if password is None:
-        password = getpass.getpass("Globus Online Password: ")
+        if not userpass_list == None: 
+            password = userpass_list[1]
+            print "Using default password."
+        if password == None:
+            password = getpass.getpass("Globus Online Password: ")  
 
     basic_auth = base64.b64encode("%s:%s" % (username, password))
     headers = { "Content-type": "application/json; charset=UTF-8",
