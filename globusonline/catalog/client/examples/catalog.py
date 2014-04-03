@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!python
+# Note: The line above is modified by setup.py 
 
 import sys
 import json
 
-from catalog_wrapper import *
+from globusonline.catalog.client.examples.catalog_wrapper import *
 from globusonline.catalog.client.operators import Op, build_selector
 
 print_text = False  #Variable used to decide whether output should be in JSON (False) or limited plain text (True)
@@ -37,9 +38,13 @@ def check_flags(the_flag_list, the_args):
 
 def check_environment():
     global show_output
+    global use_log_files
     
     if os.getenv('GCAT_SHOW_OUTPUT') == '0': 
         show_output = False
+    if os.getenv('GCAT_USE_LOG_FILES') == '1': 
+        use_log_files = True
+
 
 
 def format_catalog_text(the_catalog):
@@ -762,6 +767,7 @@ if __name__ == "__main__":
     log_file = 'log/GlobusCatalog-log.txt'
     fail_log_file = 'log/GlobusCatalog-failed-log.txt'
     show_output = True
+    use_log_files = False
 
     #Store authentication data in a local file
     token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
@@ -782,10 +788,15 @@ if __name__ == "__main__":
     arg_list = ['python']+sys.argv
     log_string = ' '.join(arg_list)
 
-    with open(log_file, "a") as myfile:
-        myfile.write(log_string+'\n')
+    if use_log_files: 
+        with open(log_file, "a") as myfile:
+            myfile.write(log_string+'\n')
+    else: 
+        print log_string
 
     if success is False:
-        with open(fail_log_file, "a") as myfile:
-            myfile.write(log_string+'\n')
-
+        if use_log_files: 
+            with open(fail_log_file, "a") as myfile:
+                myfile.write(log_string+'\n')
+        else:
+            print log_string
