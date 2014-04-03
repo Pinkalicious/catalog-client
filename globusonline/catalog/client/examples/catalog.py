@@ -3,49 +3,26 @@
 
 import sys
 import json
+from optparse import OptionParser
 
 from globusonline.catalog.client.examples.catalog_wrapper import *
 from globusonline.catalog.client.operators import Op, build_selector
 
 print_text = False  #Variable used to decide whether output should be in JSON (False) or limited plain text (True)
-default_catalog = None 
-
-def split_args(the_command_list, the_args):
-    global the_command
-
-    for arg in the_args:
-        if arg in the_command_list:
-            the_command = arg
-            split_index = the_args.index(arg) + 1
-            return the_args[split_index:]
-
-def check_flags(the_flag_list, the_args):
-    global the_flags
-    global print_text
-    global default_catalog
-    global show_output
-
-    for arg in the_args:
-        if arg in the_flag_list:
-            the_flags.append(arg)
-    for flag in the_flags:
-        if flag == "-text":
-            print_text = True
-        if flag == "-dc" or flag == "default_catalog":
-            default_catalog = os.getenv('GCAT_DEFAULT_CATALOG_ID')
-        if flag == "-x": #Suppress output
-            show_output = False
+default_catalog = None
+show_output = True
+use_log_files = False
 
 def check_environment():
     global show_output
     global use_log_files
+    global default_catalog
     
     if os.getenv('GCAT_SHOW_OUTPUT') == '0': 
         show_output = False
     if os.getenv('GCAT_USE_LOG_FILES') == '1': 
         use_log_files = True
-
-
+    default_catalog = os.getenv('GCAT_DEFAULT_CATALOG_ID')
 
 def format_catalog_text(the_catalog):
     catalog_description = ''
@@ -81,8 +58,9 @@ def format_member_text(the_member):
         member_labels = 'no references'
     return "%s) ref:%s - %s - %s"%(the_member['id'], member_references, the_member['data_type'], the_member['data_uri'])
 
-def execute_command(the_command, the_args):
+def execute_command(args):
     global wrap
+    the_command = args.pop(0)
     if(the_command == 'get_catalogs'):
         #takes no args, returns all visible catalogs
 
@@ -108,7 +86,7 @@ def execute_command(the_command, the_args):
     
     elif(the_command == 'create_catalog'):
         try:
-            arg_dict = json.loads(the_args[0])
+            arg_dict = json.loads(args[0])
             #print "CREATE CATALOG - %s"%(arg_dict)
             try:
                 _,catalog_list = wrap.catalogClient.create_catalog(arg_dict)
@@ -137,10 +115,10 @@ def execute_command(the_command, the_args):
         #@arg[0] = catalog ID -- INT
         #@arg[1] = verify -- True to verify deletion
         try:
-            if(the_args[0] != '' and (the_args[1] == "True" or the_args[1]=="true" or the_args[1]==True)):
+            if(args[0] != '' and (args[1] == "True" or args[1]=="true" or args[1]==True)):
                 if show_output:
-                    print "DELETE CATALOG - Catalog ID:%s"%(the_args[0])
-                    wrap.catalogClient.delete_catalog(the_args[0])
+                    print "DELETE CATALOG - Catalog ID:%s"%(args[0])
+                    wrap.catalogClient.delete_catalog(args[0])
                 return True
         except IndexError:
                 if show_output:
@@ -165,10 +143,10 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog is not None:
                 catalog_arg = default_catalog
-                annotation_arg = the_args[0]
+                annotation_arg = args[0]
             else:
-                catalog_arg = the_args[0]
-                annotation_arg = the_args[1]
+                catalog_arg = args[0]
+                annotation_arg = args[1]
         except IndexError, e:
             
             if show_output:
@@ -201,7 +179,7 @@ def execute_command(the_command, the_args):
             if default_catalog is not None:
                 catalog_arg = default_catalog
             else:
-                catalog_arg = the_args[0]
+                catalog_arg = args[0]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -242,18 +220,18 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog is not None:
                 catalog_arg = default_catalog
-                annotation_arg = the_args[0]
-                value_arg = the_args[1]
+                annotation_arg = args[0]
+                value_arg = args[1]
                 try:
-                    multivalue_arg = the_args[2]
+                    multivalue_arg = args[2]
                 except IndexError:
                     pass
             else:
-                catalog_arg = the_args[0]
-                annotation_arg = the_args[1]
-                value_arg = the_args[2]
+                catalog_arg = args[0]
+                annotation_arg = args[1]
+                value_arg = args[2]
                 try:
-                    multivalue_arg = the_args[3]
+                    multivalue_arg = args[3]
                 except IndexError:
                     pass
 
@@ -289,7 +267,7 @@ def execute_command(the_command, the_args):
             if default_catalog is not None:
                 catalog_arg = default_catalog
             else:
-                catalog_arg = the_args[0]
+                catalog_arg = args[0]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -326,10 +304,10 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
+                dataset_arg = args[0]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -374,12 +352,12 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                annotation_arg = the_args[1]
+                dataset_arg = args[0]
+                annotation_arg = args[1]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                annotation_arg = the_args[2]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                annotation_arg = args[2]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -396,7 +374,7 @@ def execute_command(the_command, the_args):
 
 
         if catalog_arg and dataset_arg and annotation_arg:
-            #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(the_args[0],the_args[1],the_args[2])
+            #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(args[0],args[1],args[2])
             _,response = wrap.catalogClient.add_dataset_annotations(catalog_arg,dataset_arg,json.loads(annotation_arg))
             if show_output:
                 print response
@@ -414,12 +392,12 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                verify_arg = the_args[1]
+                dataset_arg = args[0]
+                verify_arg = args[1]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                verify_arg = the_args[2]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                verify_arg = args[2]
         except IndexError,e:
             if show_output:
                 print 'Index Error:',e
@@ -444,18 +422,18 @@ def execute_command(the_command, the_args):
         acl_arg = None
 
         print default_catalog
-        print the_args
+        print args
         try:
             if default_catalog:
                 print 'here'
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                acl_arg = the_args[1]
+                dataset_arg = args[0]
+                acl_arg = args[1]
             else:
                 print 's'
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                acl_arg  = the_args[2]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                acl_arg  = args[2]
 
         except IndexError,e:
             print e
@@ -475,10 +453,10 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                acl_arg = the_args[0]
+                acl_arg = args[0]
             else:
-                catalog_arg = the_args[0]
-                acl_arg  = the_args[1]
+                catalog_arg = args[0]
+                acl_arg  = args[1]
         except IndexError,e:
             print e
 
@@ -501,10 +479,10 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
+                dataset_arg = args[0]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
         except IndexError,e:
             print e
 
@@ -521,10 +499,10 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
+                dataset_arg = args[0]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
         except IndexError,e:
             print e
 
@@ -555,14 +533,14 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                member_arg = the_args[1]
-                annotation_arg = the_args[2]
+                dataset_arg = args[0]
+                member_arg = args[1]
+                annotation_arg = args[2]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                member_arg = the_args[2]
-                annotation_arg = the_args[3]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                member_arg = args[2]
+                annotation_arg = args[3]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -594,14 +572,14 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                field_arg = the_args[0]
-                operator_arg = the_args[1]
-                value_arg = the_args[2]
+                field_arg = args[0]
+                operator_arg = args[1]
+                value_arg = args[2]
             else:
-                catalog_arg = the_args[0]
-                field_arg = the_args[1]
-                operator_arg = the_args[2]
-                value_arg = the_args[3]
+                catalog_arg = args[0]
+                field_arg = args[1]
+                operator_arg = args[2]
+                value_arg = args[3]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -646,16 +624,16 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                field_arg = the_args[1]
-                operator_arg = the_args[2]
-                value_arg = the_args[3]
+                dataset_arg = args[0]
+                field_arg = args[1]
+                operator_arg = args[2]
+                value_arg = args[3]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                field_arg = the_args[2]
-                operator_arg = the_args[3]
-                value_arg = the_args[4]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                field_arg = args[2]
+                operator_arg = args[3]
+                value_arg = args[4]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -702,12 +680,12 @@ def execute_command(the_command, the_args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = the_args[0]
-                member_arg = the_args[1]
+                dataset_arg = args[0]
+                member_arg = args[1]
             else:
-                catalog_arg = the_args[0]
-                dataset_arg = the_args[1]
-                member_arg = the_args[2]
+                catalog_arg = args[0]
+                dataset_arg = args[1]
+                member_arg = args[2]
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -759,34 +737,33 @@ if __name__ == "__main__":
                     "get_annotation_defs","test_command","get_datasets_by_name","query_datasets",
                     "add_member_annotation",'delete_token_file',"create_members", "query_members", 
                     "add_dataset_acl", "get_dataset_acl", "add_dataset_acl_recursive")
-    flag_list = ("-text","-dc","default_catalog","-x")
     the_command = ''    #Stores the command to be executed via the catalogClient API
     selector_list = []
-    the_flags = []      #Stores any flags detected in the arguments
-    the_args = ''
-    log_file = 'log/GlobusCatalog-log.txt'
-    fail_log_file = 'log/GlobusCatalog-failed-log.txt'
-    show_output = True
-    use_log_files = False
 
     #Store authentication data in a local file
     token_file = os.getenv('HOME','')+"/.ssh/gotoken.txt"
     wrap = CatalogWrapper(token_file=token_file)
 
-    #Check for any recognized flags from flag_list
-    check_flags(flag_list,sys.argv)
+    parser = OptionParser()
+    parser.add_option("-t", "--text", 
+                      action="store_true", dest="print_text", default=False,
+                      help="generate plain text output (default is JSON)")
+    parser.add_option("-x", 
+                      action="store_false", dest="show_output", default=True,
+                      help="generate no output")
+    (options, args) = parser.parse_args()
+    print_text = options.print_text 
+    show_output = options.show_output
 
-    #Check for any recognized environment variables
     check_environment()
  
-    #Condition the input argument list. Slice at the first recognized command from command_list and set the_command
-    the_args = split_args(command_list,sys.argv)
-
-    #Execute the appropriate client action and check for appropriate args
-    success = execute_command(the_command,the_args)
+    success = execute_command(args)
 
     arg_list = ['python']+sys.argv
     log_string = ' '.join(arg_list)
+
+    log_file = 'log/GlobusCatalog-log.txt'
+    fail_log_file = 'log/GlobusCatalog-failed-log.txt'
 
     if use_log_files: 
         with open(log_file, "a") as myfile:
