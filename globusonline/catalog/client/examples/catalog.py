@@ -1,9 +1,7 @@
+#!/usr/bin/env python
+
 import sys
 import json
-import re
-import os
-import ConfigParser
-import io
 
 from catalog_wrapper import *
 from globusonline.catalog.client.operators import Op, build_selector
