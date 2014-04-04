@@ -58,6 +58,18 @@ def format_member_text(the_member):
         member_labels = 'no references'
     return "%s) ref:%s - %s - %s"%(the_member['id'], member_references, the_member['data_type'], the_member['data_uri'])
 
+def make_annotation_dict(args):
+    result = dict()
+    for arg in args: 
+        tokens = arg.partition(':')
+        if tokens[1] is "":
+            print "malformed annotation: ", arg
+            return None
+        key = tokens[0]
+        value = tokens[2]
+        result[key] = value
+    return result
+
 def execute_command(args):
     global wrap
     the_command = args.pop(0)
@@ -355,8 +367,13 @@ def execute_command(args):
             else:
                 catalog_arg = args.pop(0)
             dataset_arg     = args.pop(0)
-            annotation_arg  = args.pop(0)
-            print "annotation: ", annotation_arg
+            # print "annotations: ", args
+            if args[0][0] == '{':
+                # Received JSON
+                annotation_dict = json.loads(args[0])
+            else: 
+                # Received list of KEY:VALUE
+                annotation_dict = make_annotation_dict(args)
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -370,14 +387,15 @@ def execute_command(args):
             if show_output:
                 print 'KeyError:',e
             return False
-
-
-        if catalog_arg and dataset_arg and annotation_arg:
+        if catalog_arg and dataset_arg and annotation_dict:
             #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(args[0],args[1],args[2])
-            _,response = wrap.catalogClient.add_dataset_annotations(catalog_arg,dataset_arg,json.loads(annotation_arg))
+            _,response = wrap.catalogClient.add_dataset_annotations(catalog_arg,dataset_arg,annotation_dict)
             if show_output:
                 print response
             return True
+        else:
+            print "add_dataset_annotation: did not receive all required arguments!" 
+            return False
 
     
     elif(the_command == 'delete_dataset'):
