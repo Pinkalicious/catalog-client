@@ -352,12 +352,11 @@ def execute_command(args):
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = args[0]
-                annotation_arg = args[1]
             else:
-                catalog_arg = args[0]
-                dataset_arg = args[1]
-                annotation_arg = args[2]
+                catalog_arg = args.pop(0)
+            dataset_arg     = args.pop(0)
+            annotation_arg  = args.pop(0)
+            print "annotation: ", annotation_arg
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
