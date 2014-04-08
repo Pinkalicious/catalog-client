@@ -60,7 +60,7 @@ def format_member_text(the_member):
 
 def make_annotation_dict(args):
     result = dict()
-    for arg in args: 
+    for arg in args:
         tokens = arg.partition(':')
         if tokens[1] is "":
             print "malformed annotation: ", arg
@@ -151,14 +151,19 @@ def execute_command(args):
         #annotation list -- text string '{"name":"New Dataset"}'
         catalog_arg = None
         annotation_arg = None
-
+         
         try:
             if default_catalog is not None:
-                catalog_arg = default_catalog
-                annotation_arg = args[0]
+                catalog_arg = default_catalog    
             else:
-                catalog_arg = args[0]
-                annotation_arg = args[1]
+                catalog_arg = args.pop(0)
+            annotation_arg = args.pop(0)
+            if annotation_arg[0] == '{':
+                # Received JSON
+                annotation_dict = json.loads(annotation_arg)
+            else: 
+                # Received list of KEY:VALUE
+                annotation_dict = make_annotation_dict([annotation_arg])
         except IndexError, e:
             
             if show_output:
@@ -172,16 +177,13 @@ def execute_command(args):
                 print 'KeyError:',e
 
         if catalog_arg is not None and annotation_arg is not None:
-                #print "CREATE DATASET - Catalog ID:%s Annotations:%s"%(catalog_arg,annotation_arg)
-                    try:
-                        _,result = wrap.catalogClient.create_dataset(catalog_arg,json.loads(annotation_arg))
-                        if show_output:
-                            print "%s,%s"%(catalog_arg,result['id'])
-                    except Exception, e:
-                        if show_output:
-                            print e
-                
-       
+            try:
+                _,result = wrap.catalogClient.create_dataset(catalog_arg,annotation_dict)
+                if show_output:
+                    print result['id']
+            except Exception, e:
+                if show_output:
+                    print e
 
     elif(the_command == 'get_datasets'):
         #Arguments f(catalog_id)
@@ -391,7 +393,12 @@ def execute_command(args):
             #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(args[0],args[1],args[2])
             _,response = wrap.catalogClient.add_dataset_annotations(catalog_arg,dataset_arg,annotation_dict)
             if show_output:
-                print response
+                if not print_text:
+                    print response
+                else:
+                    # Say nothing - we succeeded
+                    pass
+            
             return True
         else:
             print "add_dataset_annotation: did not receive all required arguments!" 
@@ -785,8 +792,6 @@ if __name__ == "__main__":
     if use_log_files: 
         with open(log_file, "a") as myfile:
             myfile.write(log_string+'\n')
-    else: 
-        print log_string
 
     if success is False:
         if use_log_files: 
