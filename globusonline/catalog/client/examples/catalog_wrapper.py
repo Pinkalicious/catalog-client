@@ -28,7 +28,10 @@ class CatalogWrapper:
         #Client Variables
         self.catalogClient  = ''     #client for interfacing with Globus Catalog
         #Debug Variables
-        self.debug = True
+        self.debug = False
+        if os.getenv("GCAT_DEBUG", "0") is "1":
+            print "enabling debug"
+            self.debug = True
         self.debug_list = []
         
         self.GO_authenticate()
