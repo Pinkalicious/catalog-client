@@ -10,6 +10,7 @@ from globusonline.catalog.client.operators import Op, build_selector
 
 print_text = False  #Variable used to decide whether output should be in JSON (False) or limited plain text (True)
 default_catalog = None
+name_mode = False
 show_output = True
 short_format = False
 use_log_files = False
@@ -72,6 +73,20 @@ def make_annotation_dict(args):
         value = tokens[2]
         result[key] = value
     return result
+
+# Lookup name:<name>; return the dataset ID
+def resolve_dataset_name(catalog_id, name):
+    selector_list = [("name",Op["LIKE"],name)]
+    _,result = wrap.catalogClient.get_datasets(catalog_id, selector_list=selector_list)
+    if len(result) == 0:
+        raise "Nothing found!"
+    elif len(result) > 1: 
+        raise "Found multiple entries!"
+    else: 
+        dataset = result[0]
+        id = dataset['id']
+        print id 
+        return id
 
 def execute_command(args):
     global wrap
@@ -372,6 +387,9 @@ def execute_command(args):
             else:
                 catalog_arg = args.pop(0)
             dataset_arg     = args.pop(0)
+            if name_mode:
+                dataset_arg = resolve_dataset_name(catalog_arg, dataset_arg)
+            print dataset_arg
             # print "annotations: ", args
             if args[0][0] == '{':
                 # Received JSON
@@ -772,6 +790,9 @@ if __name__ == "__main__":
     wrap = CatalogWrapper(token_file=token_file)
 
     parser = OptionParser()
+    parser.add_option("-n", "--name", 
+                      action="store_true", dest="name_mode", default=False,
+                      help="operate on names instead of dataset IDs")
     parser.add_option("-s", "--short", 
                       action="store_true", dest="short_format", default=False,
                       help="generate plain text output in short format")
@@ -782,6 +803,7 @@ if __name__ == "__main__":
                       action="store_false", dest="show_output", default=True,
                       help="generate no output")
     (options, args) = parser.parse_args()
+    name_mode    = options.short_format
     short_format = options.short_format
     print_text   = options.print_text 
     show_output  = options.show_output
