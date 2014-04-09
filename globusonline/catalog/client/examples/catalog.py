@@ -749,7 +749,7 @@ def execute_command(args):
 
     else:
         if show_output:
-            print 'Invalid Command'
+            print('catalog.py: Invalid command: ' + the_command) 
         return False
 
 if __name__ == "__main__":
