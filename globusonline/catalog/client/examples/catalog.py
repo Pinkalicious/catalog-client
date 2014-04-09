@@ -27,15 +27,14 @@ def check_environment():
 
 def format_catalog_text(the_catalog):
     catalog_description = ''
-    catalog_owners = ''
     catalog_name = ''
     try:
         catalog_description = the_catalog['config']['description']
-    except KeyError, e:
+    except KeyError:
         catalog_description = ''
     try:
         catalog_name = the_catalog['config']['name']
-    except KeyError, e:
+    except KeyError:
         catalog_name = 'no catalog name'
     return "%s)\t%s - [%s] - %s"%(the_catalog['id'], catalog_name, the_catalog['config']['owner'], catalog_description)
 
@@ -50,7 +49,7 @@ def format_dataset_text(the_dataset):
         dataset_labels = 'no labels'
     try:
         dataset_name = the_dataset['name']
-    except KeyError, e:
+    except KeyError:
         dataset_name = 'no dataset name'
     return "%s) %s - [%s] - <%s>"%(the_dataset['id'], dataset_name, the_dataset['owner'], dataset_labels)
 
