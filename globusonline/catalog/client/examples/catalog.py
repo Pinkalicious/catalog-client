@@ -79,9 +79,9 @@ def resolve_dataset_name(catalog_id, name):
     selector_list = [("name",Op["LIKE"],name)]
     _,result = wrap.catalogClient.get_datasets(catalog_id, selector_list=selector_list)
     if len(result) == 0:
-        raise "Nothing found!"
+        raise LookupError("Nothing found for name:"+name)
     elif len(result) > 1: 
-        raise "Found multiple entries!"
+        raise LookupError("Found multiple entries for name:"+name)
     else: 
         dataset = result[0]
         id = dataset['id']
@@ -333,13 +333,15 @@ def execute_command(args):
         catalog_arg = None
         dataset_arg = None
 
+
         try:
             if default_catalog:
                 catalog_arg = default_catalog
-                dataset_arg = args[0]
             else:
-                catalog_arg = args[0]
-                dataset_arg = args[1]
+                catalog_arg = args.pop(0)
+            dataset_arg = args.pop(0)
+            if name_mode:
+                dataset_arg = resolve_dataset_name(catalog_arg, dataset_arg)
         except IndexError:
             if show_output:
                 print "==================ERROR===================="
@@ -352,6 +354,9 @@ def execute_command(args):
         except KeyError, e:
             if show_output:
                 print 'KeyError:',e
+            return False
+        except LookupError as e:
+            print e
             return False
 
         if catalog_arg and dataset_arg:
@@ -409,6 +414,9 @@ def execute_command(args):
         except KeyError, e:
             if show_output:
                 print 'KeyError:',e
+            return False
+        except LookupError as e:
+            print e
             return False
         if catalog_arg and dataset_arg and annotation_dict:
             #print "ADD DATASET TAG - Catalog ID:%s Dataset ID:%s Annotations:%s",(args[0],args[1],args[2])
