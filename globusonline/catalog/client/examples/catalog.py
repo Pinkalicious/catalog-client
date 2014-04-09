@@ -797,5 +797,5 @@ if __name__ == "__main__":
         if use_log_files: 
             with open(fail_log_file, "a") as myfile:
                 myfile.write(log_string+'\n')
-        else:
-            print log_string
+        sys.exit(1)
+
