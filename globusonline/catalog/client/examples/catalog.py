@@ -11,6 +11,7 @@ from globusonline.catalog.client.operators import Op, build_selector
 print_text = False  #Variable used to decide whether output should be in JSON (False) or limited plain text (True)
 default_catalog = None
 show_output = True
+short_format = False
 use_log_files = False
 
 def check_environment():
@@ -39,7 +40,10 @@ def format_catalog_text(the_catalog):
     return "%s)\t%s - [%s] - %s"%(the_catalog['id'], catalog_name, the_catalog['config']['owner'], catalog_description)
 
 def format_dataset_text(the_dataset):
+    global short_format
     dataset_labels = ''
+    if short_format: 
+        return the_dataset['id']
     try:
         dataset_labels = ','.join(the_dataset['label'])
     except:
@@ -769,6 +773,9 @@ if __name__ == "__main__":
     wrap = CatalogWrapper(token_file=token_file)
 
     parser = OptionParser()
+    parser.add_option("-s", "--short", 
+                      action="store_true", dest="short_format", default=False,
+                      help="generate plain text output in short format")
     parser.add_option("-t", "--text", 
                       action="store_true", dest="print_text", default=False,
                       help="generate plain text output (default is JSON)")
@@ -776,8 +783,9 @@ if __name__ == "__main__":
                       action="store_false", dest="show_output", default=True,
                       help="generate no output")
     (options, args) = parser.parse_args()
-    print_text = options.print_text 
-    show_output = options.show_output
+    short_format = options.short_format
+    print_text   = options.print_text 
+    show_output  = options.show_output
 
     check_environment()
  
