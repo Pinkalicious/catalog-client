@@ -1,5 +1,5 @@
 #!python
-# Note: The line above is modified by setup.py 
+# Note: The line above is modified by setup.py
 
 import sys
 import json
@@ -817,8 +817,13 @@ if __name__ == "__main__":
     show_output  = options.show_output
 
     check_environment()
- 
-    success = execute_command(args)
+    if len(args) > 0:
+        success = execute_command(args)
+    else:
+        print "No arguments!"
+        print ""
+        parser.print_usage()
+        sys.exit(1)
 
     arg_list = ['python']+sys.argv
     log_string = ' '.join(arg_list)
