@@ -361,6 +361,9 @@ def execute_command(args):
 
         if catalog_arg and dataset_arg:
             _,tmp_result = wrap.catalogClient.get_dataset_annotations(catalog_arg,dataset_arg,annotation_list=['annotations_present'])
+            if len(tmp_result) == 0:
+                print "No annotations found"
+                return True
             _,dataset_annotations = wrap.catalogClient.get_dataset_annotations(catalog_arg,dataset_arg,annotation_list=tmp_result[0]['annotations_present'])
         else:
             if show_output:
