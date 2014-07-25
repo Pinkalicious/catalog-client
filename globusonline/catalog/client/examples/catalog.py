@@ -599,7 +599,6 @@ def get_member_annotations(args):
         print response    
     return True
 
-
 def query_datasets(args):
     catalog_arg = pop_catalog(args)
     check_arg_count_cat(args, 3)
@@ -678,11 +677,23 @@ commands_dataset = [ "get_datasets", "create_dataset", "delete_dataset",
                      "query_datasets", 
                      "add_dataset_acl", "get_dataset_acl", 
                      "add_dataset_acl_recursive" ]
-commands_members = [ "get_dataset_members", "create_members", 
+commands_member  = [ "get_dataset_members", "create_members", 
                      "add_member_annotation", "get_member_annotations" ] 
 commands_token   = [ "write_token", "delete_token_file" ]
 commands = commands_catalog + commands_dataset + \
-           commands_members + commands_token 
+           commands_member  + commands_token 
+              
+def describe_commands():
+    print "Globus Catalog CLI Commands"
+    print "---------------------------"
+    print "Catalog commands:"
+    print("\t"+"\n\t".join(commands_catalog))
+    print "Dataset commands:"
+    print("\t"+"\n\t".join(commands_dataset))
+    print "Member commands:"
+    print("\t"+"\n\t".join(commands_member))  
+    print "Token commands:"
+    print("\t"+"\n\t".join(commands_token))                
                 
 def dispatch_command(command, args):
     if not (command in commands):
@@ -697,6 +708,9 @@ def run_parser():
     parser.add_option("-f", "--force", 
                       action="store_true", dest="force", default=False,
                       help="allow problematic operations to complete silently")
+    parser.add_option("-H", "--commands",
+                      action="store_true", dest="help_commands", default=False,
+                      help="list all commands")
     parser.add_option("-n", "--name", 
                       action="store_true", dest="name_mode", default=False,
                       help="operate on names instead of dataset IDs")
@@ -718,6 +732,10 @@ def run_parser():
     print_text   = options.print_text 
     show_output  = options.show_output
     
+    if options.help_commands:
+        describe_commands()
+        sys.exit(0)
+    
     if len(args) == 0:
         print "No arguments!"
         print ""
@@ -735,8 +753,8 @@ if __name__ == "__main__":
     wrap = CatalogWrapper(token_file=token_file)
 
     args = run_parser()
-    check_environment()
     
+    check_environment()
     the_command = args.pop(0)
     success = False
     try:
