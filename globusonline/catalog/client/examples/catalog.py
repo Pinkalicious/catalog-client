@@ -100,6 +100,20 @@ def resolve_dataset_name(catalog_id, name):
     id = dataset['id']
     return id
 
+# Lookup name:<name>; return the dataset ID
+# Raises LookupError
+def resolve_member_name(catalog_id, name):
+    selector_list = [("name",Op["LIKE"],name)]
+    _,result = wrap.catalogClient.get_datasets(catalog_id, selector_list=selector_list)
+    if len(result) == 0:
+        raise LookupError("Nothing found for name:"+name)
+    elif len(result) > 1: 
+        raise LookupError("Found multiple (%i) entries for name:%s" %\
+                          len(result), name)
+    dataset = result[0]
+    id = dataset['id']
+    return id
+
 class ArgsException(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -561,6 +575,30 @@ def add_member_annotation(args):
         wrap.catalogClient.add_member_annotations \
                      (catalog_arg, dataset_arg, member_arg, annotation)
     return True
+
+def get_member_annotations(args):
+    #@arg[0] = catalog_id -- INT
+    #@arg[1] = dataset id -- INT
+    #@arg[2] = annotation id
+    catalog_arg = pop_catalog(args)
+    if len(args) < 2:
+        raise UsageException("get_member_annotations: usage: " + 
+                             "<dataset> <member>")
+    dataset_arg = args.pop(0)
+    if name_mode:
+        dataset_arg = resolve_dataset_name(catalog_arg, dataset_arg)
+    member_arg = args.pop(0)
+    
+    _,response = wrap.catalogClient.get_member_annotations \
+                         (catalog_arg, dataset_arg, member_arg)
+    if print_text:
+        for record in response:
+            for annotation_key in record:
+                print "%s:%s"%(annotation_key, record[annotation_key])
+    else: 
+        print response    
+    return True
+
 
 def query_datasets(args):
     catalog_arg = pop_catalog(args)
