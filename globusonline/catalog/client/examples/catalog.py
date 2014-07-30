@@ -474,7 +474,7 @@ def add_dataset_acl_recursive(args):
     catalog_arg = pop_catalog(args)
     if len(args) < 1:
         raise UsageException("add_dataset_acl_recursive: " + 
-                             "requires dataset!")
+                             "requires ACL!")
     acl_arg = args[0]
     if acl_arg[0] == '{':
         acl = json.loads(acl_arg)
