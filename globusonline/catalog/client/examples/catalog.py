@@ -3,6 +3,7 @@
 
 import sys
 import json
+from elasticsearch import Elasticsearch
 from optparse import OptionParser
 
 from globusonline.catalog.client.examples.catalog_wrapper import *
@@ -16,6 +17,12 @@ name_mode = False
 show_output = True
 short_format = False
 use_log_files = False
+
+es = Elasticsearch()
+res = es.search(index="globus_public_index", body={"query": {"match_all": {}}})
+print("Got %d Hits:" % res['hits']['total'])
+for hit in res['hits']['hits']:
+    print("%(timestamp)s %(author)s: %(text)s" % hit["_source"])
 
 def check_environment():
     global show_output
@@ -229,6 +236,73 @@ def delete_catalog(args):
         return False
     else:
         return False
+
+def export_catalog(args):
+    #Arguments f(catalog_id)
+    parent_catalog = ''
+    catalog_content = list()
+    annotation_def_list = list()
+
+    catalog_arg = pop_catalog(args)
+    if catalog_arg:
+        #Find the parent catalog information and save it for later use
+        _,the_catalogs = wrap.catalogClient.get_catalogs()
+        for catalog in the_catalogs:
+            if catalog['id'] == int(catalog_arg) :
+                parent_catalog = catalog
+
+        #Make a list of all of the annotation_defs in the catalog to use for retrieving
+        #the key-value annotations for each dataset
+        _,the_annotation_defs = wrap.catalogClient.get_annotation_defs(catalog_arg)
+        for annotation_def in the_annotation_defs:
+            annotation_def_list.append(annotation_def['name'])
+
+        #Loop through each dataset, gathering the associated annotations, members and (future) member annotations    
+        _,the_datasets = wrap.catalogClient.get_datasets(catalog_arg)
+        for dataset in the_datasets:
+            the_tags = list()
+            the_key_value = dict()
+            dataset['DATA_TYPE'] = 'catalog'
+            dataset['DATA_SUB_TYPE'] = 'catalog_dataset'
+
+            dataset['parent_catalog'] = parent_catalog
+            
+            #get dataset annotations
+            dataset['kv'] = dict()
+            _,the_dataset_annotations = wrap.catalogClient.get_dataset_annotations(catalog_arg, dataset['id'], annotation_def_list)
+            for annotation in the_dataset_annotations[0]:
+                the_kv_annotation = dict()
+                #This check is a hack to properly format the temperatures in Catalog 71
+                if(annotation == 'temperature'):
+                    temp_string = the_dataset_annotations[0][annotation]
+                    temp_string_length = len(the_dataset_annotations[0][annotation])
+                    unit_string = str(temp_string[temp_string_length-1:])
+                    value_string = float(temp_string[:-1])
+                    the_kv_annotation['value'] = value_string
+                    the_kv_annotation['unit'] = unit_string
+                else:
+                    the_kv_annotation['value'] = the_dataset_annotations[0][annotation]
+                    the_kv_annotation['unit'] = ''
+                dataset['kv'][str(annotation)] = the_kv_annotation
+                the_tags.append(str(annotation)+':'+str(the_dataset_annotations[0][annotation]))
+
+            #dataset['keywords'] = the_tags
+            dataset['tags'] = the_tags
+           # dataset['kv'] = the_dataset_annotations[0]
+            dataset['title'] = dataset['name']
+            dataset['author'] = dataset['owner']
+            
+            #get dataset members
+            _,dataset['dataset_members'] = wrap.catalogClient.get_members(catalog_arg, dataset['id'])
+            #get member annotations
+
+            catalog_content.append(dataset)
+            print json.dumps(catalog_content)
+            return True
+
+        #Send to elasticsearch index
+    return False
+
 
 def create_dataset(args):
     #Arguments f(catalog_id, annotation_list) 
@@ -671,7 +745,7 @@ def query_members(args):
 
 # Set up commands: 
 commands_catalog = [ "get_catalogs", "create_catalog", "delete_catalog", 
-                     "create_annotation_def", "get_annotation_defs" ] 
+                     "create_annotation_def", "get_annotation_defs", "export_catalog" ] 
 commands_dataset = [ "get_datasets", "create_dataset", "delete_dataset",
                      "add_dataset_annotation", "get_dataset_annotations", 
                      "query_datasets", 
