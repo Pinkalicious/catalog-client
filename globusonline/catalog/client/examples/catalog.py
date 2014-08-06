@@ -306,6 +306,17 @@ def create_annotation_def(args):
             raise e
     return response
 
+def delete_annotation_def(args):
+    #Arguments f(catalog_id, annotation_name)
+
+    catalog_arg = pop_catalog(args)
+    if len(args) != 1:
+        error("usage: <catalog>? <annotation>")
+    annotation_arg = args[0]
+    response = wrap.catalogClient.delete_annotation_def \
+        (catalog_id=catalog_arg, annotation_name=annotation_arg)
+    return response
+
 def get_annotation_defs(args):
     # Arguments: catalog_id
 
@@ -525,7 +536,7 @@ def create_members(args):
                     "data_uri":  args[1]}
     _,result = wrap.catalogClient.create_members(catalog_arg,dataset_arg,members)
     if show_output:
-        result['id']
+        print result['id']
     return True
 
 def get_dataset_members(args):
@@ -671,7 +682,8 @@ def query_members(args):
 
 # Set up commands: 
 commands_catalog = [ "get_catalogs", "create_catalog", "delete_catalog", 
-                     "create_annotation_def", "get_annotation_defs" ] 
+                     "create_annotation_def", "delete_annotation_def", 
+                     "get_annotation_defs" ] 
 commands_dataset = [ "get_datasets", "create_dataset", "delete_dataset",
                      "add_dataset_annotation", "get_dataset_annotations", 
                      "query_datasets", 
