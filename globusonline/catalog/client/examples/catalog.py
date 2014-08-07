@@ -472,11 +472,18 @@ def add_dataset_acl(args):
         raise UsageException("add_dataset_acl: " + msg)
     
     catalog_arg = pop_catalog(args)
-    check_arg_count_cat(args, 2)
-    dataset_arg = args[0]
-    acl_arg = args[1]
     
-    wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, json.loads(acl_arg))
+    dataset_arg = args.pop(0)
+    acl_arg = args[0]
+    
+    if acl_arg[0] == '{':
+        acl = json.loads(acl_arg)
+    else:
+        acl = { "principal":      args[0], 
+                "principal_type": args[1],
+                "permission":     args[2]}
+    
+    wrap.catalogClient.add_dataset_acl(catalog_arg, dataset_arg, acl)
     return True
 
 def add_dataset_acl_recursive(args):
@@ -512,6 +519,7 @@ def get_dataset_acl(args):
     check_arg_count_cat(args, 1)    
     dataset_arg = args[0]
     _,response = wrap.catalogClient.get_dataset_acl(catalog_arg, dataset_arg)
+
     if show_output:
         if print_text:
             print_acls(response)
