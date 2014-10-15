@@ -71,7 +71,7 @@ class CatalogWrapper:
             self.username = self.token.split('|')[0][3:] #read the username from the token file which is split by | and listed after un= in the first string          
 
         if(self.token):
-            self.catalogClient = DatasetClient(self.token, self.catalog_base_url)
+            self.catalogClient = DatasetClient(self.token.strip(), self.catalog_base_url)
             self.transferClient = TransferAPIClient(self.username, goauth=self.token, base_url=self.transfer_base_url)
 
     def check_authenticate(self):
